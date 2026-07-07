@@ -1,1 +1,1 @@
-# wsAgenticAIFW
+# Agentic AI Framework
