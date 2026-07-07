@@ -1,6 +1,6 @@
 """
 perception.py
-CPerceptionLayer — Paper Fig. 1 "Perception Layer": initiates task
+CPerceptionLayer - Paper Fig. 1 "Perception Layer": initiates task
 processing once tasks are scheduled by the orchestration layer, and
 acquires external and contextual data from sensors, databases, and
 digital interfaces.
@@ -49,13 +49,13 @@ class CPerceptionLayer:
         return self.mFetcher.resolve_fund(fund_name)
 
     # ------------------------------------------------------------------ #
-    # Digital interface — compact context for the reasoning layer.
+    # Digital interface - compact context for the reasoning layer.
     # Small local LLMs do better with a short, structured brief than a
     # full row dump, so this intentionally caps to a handful of funds.
     # ------------------------------------------------------------------ #
     def describe_context(self, snapshot: List[Dict], max_funds: int = 8) -> str:
         if not snapshot:
-            return "Portfolio is empty — no holdings on record."
+            return "Portfolio is empty - no holdings on record."
 
         owners = sorted({r["owner_name"] for r in snapshot})
         lines = [f"Owners on record: {', '.join(owners)}.",

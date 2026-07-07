@@ -32,13 +32,13 @@ class CFetchNAV:
     cMFAPI_LATEST_NAV_URL = "https://api.mfapi.in/mf/{scheme_code}/latest"
     cMFAPI_HISTORY_URL = "https://api.mfapi.in/mf/{scheme_code}"
 
-    # Fill this in for any fund that still doesn't resolve confidently —
+    # Fill this in for any fund that still doesn't resolve confidently -
     # checked first, before any fuzzy matching.
     dictMANUAL_SCHEME_CODE_OVERRIDES: Dict[str, str] = {
         # "YOUR FUND NAME EXACTLY AS IN fund_list": "123456",
     }
 
-    # Terms to exclude unless the query itself asks for them — these are
+    # Terms to exclude unless the query itself asks for them - these are
     # different payout options of the *same* scheme, not different schemes.
     cEXCLUDED_PLAN_TERMS = ("IDCW", "DIVIDEND", "BONUS")
 
@@ -53,7 +53,7 @@ class CFetchNAV:
     @staticmethod
     def _normalize(name: str) -> str:
         text = name.upper()
-        # Drop parenthetical asides like "(erstwhile Bluechip Fund)" — these
+        # Drop parenthetical asides like "(erstwhile Bluechip Fund)" - these
         # are naming-history footnotes, not part of the scheme's identity,
         # and their extra length was unfairly dragging down seq_ratio for
         # the otherwise-correct match.
@@ -95,7 +95,7 @@ class CFetchNAV:
     def search_fund_by_name(self, fund_name: str, top_n: int = 5) -> List[SchemeMatch]:
         """
         Rank every cached scheme against fund_name and return the top_n
-        best matches (best first). No network call — uses the cache
+        best matches (best first). No network call - uses the cache
         built once in __init__.
         """
         query_norm = self._normalize(fund_name)
@@ -110,7 +110,7 @@ class CFetchNAV:
             if not query_wants_idcw and any(term in cand_norm for term in self.cEXCLUDED_PLAN_TERMS):
                 continue
             # Prefer the plan type that matches (Regular is the default
-            # when the query doesn't say "Direct" — these are bank/
+            # when the query doesn't say "Direct" - these are bank/
             # distributor-sold folios).
             cand_is_direct = "DIRECT" in cand_norm
             if query_wants_direct != cand_is_direct:
@@ -192,10 +192,10 @@ class CFetchNAV:
                 return True
             else:
                 print(f"Cache is stale (cached={cached.get('date')}, "
-                        f"today={strToday}) — refreshing.")
+                        f"today={strToday}) - refreshing.")
                 SCHEME_CACHE_PATH.unlink()
         except (json.JSONDecodeError, KeyError, OSError) as e:
-            print(f"Cache read failed ({e}) — refreshing.")
+            print(f"Cache read failed ({e}) - refreshing.")
             if SCHEME_CACHE_PATH.exists():
                 SCHEME_CACHE_PATH.unlink()
         return False
@@ -215,13 +215,13 @@ class CFetchNAV:
     def GetNAVsAll(self, bForceUpdate) -> None:
         strToday = date.today().isoformat()
 
-        # Try to use today's cache first — no network call needed.
+        # Try to use today's cache first - no network call needed.
         cache_hit = False
         if bForceUpdate == False and SCHEME_CACHE_PATH.exists():
             cache_hit = self.CheckCache(strToday)
 
         if not cache_hit:
-            # No valid cache for today (missing, stale, or bForceUpdate) —
+            # No valid cache for today (missing, stale, or bForceUpdate) -
             # fetch fresh from mfapi.in.
             self.DownloadAllNAVs()
 
@@ -242,7 +242,7 @@ class CFetchNAV:
         matches as [{"scheme_code": ..., "scheme_name": ...}, ...].
         """
         if not hasattr(self, "_all_schemes"):
-            print("Cache not loaded — call GetNAVsAll() first.")
+            print("Cache not loaded - call GetNAVsAll() first.")
             return []
 
         key = keyword.upper()
@@ -253,7 +253,7 @@ class CFetchNAV:
         ]
 
         if len(matches) > top_n:
-            print(f"{len(matches)} schemes match '{keyword}' — showing first {top_n}. "
+            print(f"{len(matches)} schemes match '{keyword}' - showing first {top_n}. "
                   f"Narrow the keyword for a tighter list.")
 
         return matches[:top_n]
@@ -261,7 +261,7 @@ class CFetchNAV:
     def lookup_nav_by_keyword(self, keyword: str, top_n: int = 20) -> List[Dict]:
         """
         Find every cached scheme whose name contains keyword, then fetch
-        the latest NAV for each match (one network call per match — keep
+        the latest NAV for each match (one network call per match - keep
         keyword specific enough that top_n doesn't get hit). Prints a
         summary and returns the list of nav_data dicts.
         """
@@ -279,12 +279,12 @@ class CFetchNAV:
                 print(f"[{m['scheme_code']}] {nav_data['fund_name']}")
                 print(f"   NAV : ₹{nav_data['nav']} as on {nav_data['date']}\n")
             else:
-                print(f"[{m['scheme_code']}] {m['scheme_name']} — NAV fetch failed\n")
+                print(f"[{m['scheme_code']}] {m['scheme_name']} - NAV fetch failed\n")
 
         return results
     
     # ------------------------------------------------------------------ #
-    # Highest NAV lookup — full history scan (not just since-tracked high)
+    # Highest NAV lookup - full history scan (not just since-tracked high)
     # ------------------------------------------------------------------ #
     def _get_highest_nav(self, scheme_code: str) -> Optional[Dict]:
         """
@@ -336,7 +336,7 @@ class CFetchNAV:
         return nav_data
     
     # ------------------------------------------------------------------ #
-    # Lowest NAV lookup — full history scan
+    # Lowest NAV lookup - full history scan
     # ------------------------------------------------------------------ #
     def _get_lowest_nav(self, scheme_code: str) -> Optional[Dict]:
         """
@@ -415,5 +415,5 @@ if __name__ == "__main__":
 
     unresolved = len(LIST_FUNDS) - len(results)
     if unresolved:
-        print(f"\n{unresolved} fund(s) unresolved — see candidates above and add "
+        print(f"\n{unresolved} fund(s) unresolved - see candidates above and add "
               f"overrides to dictMANUAL_SCHEME_CODE_OVERRIDES.")

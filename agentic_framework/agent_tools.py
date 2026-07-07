@@ -1,13 +1,13 @@
 """
 tools.py
-Action layer — "Tool Integration" (Paper Fig. 1): API connectors,
+Action layer - "Tool Integration" (Paper Fig. 1): API connectors,
 document/report generation, and database interfaces, exposed as a
 uniform registry the Task Setup Agent can wire into tool-chains and
 the execution environment can invoke under sandboxed permissions.
 
 Each tool wraps an existing, already-tested class (CHoldingsDatabase,
 CFetchNAV, CPerformanceAnalyzer, CDBInterface) rather than reimplementing
-logic — the agentic layer is an orchestration skin over the current
+logic - the agentic layer is an orchestration skin over the current
 fund-tracker, not a replacement for it.
 """
 
@@ -125,7 +125,7 @@ class CToolRegistry:
                 if dd is not None and dd >= threshold:
                     flagged.append({"fund_name": r["fund_name"], "owner_name": r["owner_name"],
                                      "drawdown": dd})
-            # Objective indicator only — not a buy/sell recommendation.
+            # Objective indicator only - not a buy/sell recommendation.
             return {"threshold": threshold, "flagged": flagged}
 
         def portfolio_report(owner_name: Optional[str] = None, **_) -> Dict:

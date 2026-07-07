@@ -1,6 +1,6 @@
 """
 execution.py
-CExecutionEnvironment — Paper Fig. 1 "Execution Environment": sandboxed
+CExecutionEnvironment - Paper Fig. 1 "Execution Environment": sandboxed
 runtime, permission system, state management, and error handling for
 the Action layer. Tool-chain steps produced by the Task Setup Agent are
 run here, never invoked directly.
@@ -61,7 +61,7 @@ class CExecutionEnvironment:
         try:
             result = tool.func(**args)
             record = CExecutionRecord(tool_name, args, "ok", result=result)
-        except Exception as e:  # noqa: BLE001 — sandbox must not propagate
+        except Exception as e:  # noqa: BLE001 - sandbox must not propagate
             record = CExecutionRecord(tool_name, args, "error", error=str(e))
 
         self.mLog.append(record)

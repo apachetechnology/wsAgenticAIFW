@@ -36,7 +36,7 @@ def print_wrap(aText, aWidth=80):
 def build_orchestrator(allow_writes: bool = True) -> CAgenticOrchestrator:
     objOS = COllamaServer()
     if not objOS.start_server():
-        raise RuntimeError("Ollama server could not be started — run 'ollama serve' manually.")
+        raise RuntimeError("Ollama server could not be started - run 'ollama serve' manually.")
     objOS.get_client("ollama")
 
     objDB = CHoldingsDatabase()
@@ -44,7 +44,7 @@ def build_orchestrator(allow_writes: bool = True) -> CAgenticOrchestrator:
     objAnalyzer = CPerformanceAnalyzer(objDB)
     objDBInterface = CDBInterface()
 
-    # WRITE/NETWORK/PLOT are opt-in per the action layer's sandbox —
+    # WRITE/NETWORK/PLOT are opt-in per the action layer's sandbox -
     # default to allowing them here since this is an interactive demo.
     permissions = ALL_PERMISSIONS if allow_writes else DEFAULT_ALLOWED_PERMISSIONS
 
@@ -58,7 +58,7 @@ def build_orchestrator(allow_writes: bool = True) -> CAgenticOrchestrator:
 if __name__ == "__main__":
     objOrchestrator = build_orchestrator(allow_writes=True)
 
-    # Example goals — the TPA plans, the TSA fills in arguments, and the
+    # Example goals - the TPA plans, the TSA fills in arguments, and the
     # action layer executes each step under sandboxed permissions.
     objOrchestrator.run(
         "Update NAVs for owner SG, record today's history, then give me "

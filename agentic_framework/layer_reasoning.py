@@ -1,6 +1,6 @@
 """
 reasoning.py
-Reasoning layer — Paper Fig. 1 / Section 3.2: Task Planning Agent (TPA)
+Reasoning layer - Paper Fig. 1 / Section 3.2: Task Planning Agent (TPA)
 and Task Setup Agent (TSA), backed by a local Ollama model via
 COllamaServer.
 
@@ -46,7 +46,7 @@ def _extract_json(text: str):
 ############################################################################
 #
 class CTaskPlanningAgent:
-    """TPA — long-term memory + reflective planning."""
+    """TPA - long-term memory + reflective planning."""
 
     def __init__(self, ollama_server: COllamaServer, memory: CAgentMemory,
                  model: str = MODEL_TPA):
@@ -146,7 +146,7 @@ class CTaskPlanningAgent:
 ############################################################################
 #
 class CTaskSetupAgent:
-    """TSA — decomposes a subgoal into a concrete tool-chain step."""
+    """TSA - decomposes a subgoal into a concrete tool-chain step."""
 
     def __init__(self, ollama_server: COllamaServer, memory: CAgentMemory,
                  model: str = MODEL_TSA):
@@ -164,7 +164,7 @@ class CTaskSetupAgent:
         return {"tool": tool_name, "args": args}
 
     # ------------------------------------------------------------------ #
-    # Argument extraction — LLM-assisted with a deterministic fallback.
+    # Argument extraction - LLM-assisted with a deterministic fallback.
     # ------------------------------------------------------------------ #
     def _extract_args(self, subgoal: str, goal_text: str,
                        default_owner: Optional[str]) -> Dict:
@@ -192,7 +192,7 @@ class CTaskSetupAgent:
 
         if subgoal == "add_fund":
             # Structured additions are best supplied by the caller directly
-            # (see orchestrator.run(..., extra_args=...)) — free-text
+            # (see orchestrator.run(..., extra_args=...)) - free-text
             # extraction of units/NAV from a sentence is unreliable enough
             # with a 1B model that we don't attempt it here.
             pass

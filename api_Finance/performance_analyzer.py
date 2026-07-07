@@ -32,6 +32,13 @@ class CPerformanceAnalyzer:
     # distinct fund's nav_latest into nav_history.
     # ------------------------------------------------------------------ #
     def RecordTodayHistory(self, owner_name: Optional[str] = None) -> None:
+        strToday = date.today().isoformat()
+
+        if self.mDB.nav_history_exists_for_date(strToday):
+            print(f"NAV history already recorded for {strToday} skipping "
+                  f"(run FetchNAVsAll for a new date first).")
+            return
+        
         rows = self.mDB.fetch_by_owner(owner_name) if owner_name else self.mDB.fetch_all()
         seen = set()
         strToday = date.today().isoformat()
@@ -43,7 +50,26 @@ class CPerformanceAnalyzer:
             seen.add(fund_name)
             self.mDB.record_nav_history(fund_name, strToday, r["nav_latest"])
             count += 1
+        # End FOR
         print(f"Recorded NAV history for {count} distinct fund(s) on {strToday}.")
+    # ------------------------------------------------------------------ #
+    # Row count per date in nav_history sanity check for how many
+    # distinct funds got a NAV recorded on each day.
+    # ------------------------------------------------------------------ #
+    def RowCountByDate(self) -> None:
+        rows = self.mDB.fetch_nav_history_counts_by_date()
+        if not rows:
+            print("No NAV history recorded yet.")
+            return
+
+        print(f"\n{'Date':<12} {'Rows':>6}")
+        print("-" * 20)
+        total = 0
+        for r in rows:
+            print(f"{r['nav_date']:<12} {r['row_count']:>6}")
+            total += r["row_count"]
+        print("-" * 20)
+        print(f"{'TOTAL':<12} {total:>6}")
 
     # ------------------------------------------------------------------ #
     # CAGR since purchase (statement_date -> today). Annualizing a return

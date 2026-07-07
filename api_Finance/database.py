@@ -1,6 +1,6 @@
 """
 database.py
-CHoldingsDatabase — a thin, class-based wrapper around a local SQLite
+CHoldingsDatabase - a thin, class-based wrapper around a local SQLite
 database used to store mutual fund / ETF holdings entries.
 
 Design notes:
@@ -135,6 +135,25 @@ class CHoldingsDatabase:
             count += 1
         return count
 
+    def delete_holding(self, owner_name: str, fund_name: str) -> int:
+        """Delete the holdings row for this owner+fund. Returns rows deleted."""
+        cur = self.mConn.execute(
+            f"DELETE FROM {config_db.TABLE_NAME} "
+            f"WHERE owner_name = ? AND fund_name = ?",
+            (owner_name, fund_name),
+        )
+        self.mConn.commit()
+        return cur.rowcount
+
+    def delete_nav_history(self, fund_name: str) -> int:
+        """Delete all nav_history rows for fund_name. Returns rows deleted."""
+        cur = self.mConn.execute(
+            f"DELETE FROM {config_db.TABLE_NAME_NAV_HISTORY} WHERE fund_name = ?",
+            (fund_name,),
+        )
+        self.mConn.commit()
+        return cur.rowcount
+    
     # ------------------------------------------------------------------ #
     # Query
     # ------------------------------------------------------------------ #
@@ -166,7 +185,7 @@ class CHoldingsDatabase:
 
     def fetch_entry(self, fund_name: str, owner_name: Optional[str] = None) -> Optional[sqlite3.Row]:
         """
-        The holding row for this fund — optionally scoped to an owner,
+        The holding row for this fund - optionally scoped to an owner,
         since the same fund_name can be held by more than one owner.
         If more than one row matches, the most recently created wins.
         """
@@ -260,7 +279,7 @@ class CHoldingsDatabase:
         return cur.rowcount
     
     # ------------------------------------------------------------------ #
-    # NAV history — one row per fund per day (shared across owners;
+    # NAV history - one row per fund per day (shared across owners;
     # a fund's NAV doesn't depend on who holds it)
     # ------------------------------------------------------------------ #
     def _create_nav_history_table(self) -> None:
@@ -309,6 +328,24 @@ class CHoldingsDatabase:
                 (fund_name,),
             )
         return cur.fetchall()
+    
+    def fetch_nav_history_counts_by_date(self) -> List[sqlite3.Row]:
+        """Row count per nav_date across all funds, most recent first."""
+        cur = self.mConn.execute(
+            f"SELECT nav_date, COUNT(*) AS row_count "
+            f"FROM {config_db.TABLE_NAME_NAV_HISTORY} "
+            f"GROUP BY nav_date ORDER BY nav_date DESC"
+        )
+        return cur.fetchall()
+    
+    def nav_history_exists_for_date(self, nav_date: str) -> bool:
+        """True if nav_history already has at least one row for nav_date."""
+        cur = self.mConn.execute(
+            f"SELECT 1 FROM {config_db.TABLE_NAME_NAV_HISTORY} "
+            f"WHERE nav_date = ? LIMIT 1",
+            (nav_date,),
+        )
+        return cur.fetchone() is not None
     
 ######################################################################################################
 if __name__ == "__main__":

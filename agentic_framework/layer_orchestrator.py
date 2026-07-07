@@ -1,6 +1,6 @@
 """
 orchestrator.py
-CAgenticOrchestrator — Paper Fig. 1 "Orchestration Layer": manages
+CAgenticOrchestrator - Paper Fig. 1 "Orchestration Layer": manages
 workflow execution by assigning tasks, optimizing resource allocation,
 and facilitating inter-agent communication (TPA <-> TSA <-> Action).
 Serves as the strategic control-and-coordination hub for the whole run.
@@ -45,7 +45,7 @@ class CAgenticOrchestrator:
         self.mTSA = CTaskSetupAgent(aOllamaServer, self.mMemory)
 
     # ------------------------------------------------------------------ #
-    # Resource allocation — a simple per-run tally of tool calls by
+    # Resource allocation - a simple per-run tally of tool calls by
     # permission bucket, printed as part of the coordination log. Keeps
     # the "optimizing resource allocation" duty of the orchestration
     # layer visible rather than implicit.
@@ -70,16 +70,16 @@ class CAgenticOrchestrator:
         self.mExecution.reset_state()
         self.mMemory.reset_short_term()
 
-        # 1. Perception — task assignment starts once context is gathered.
+        # 1. Perception - task assignment starts once context is gathered.
         snapshot = self.mPerception.gather_portfolio_snapshot(owner_name)
         context_summary = self.mPerception.describe_context(snapshot)
         print(f"[Orchestrator] Context gathered: {len(snapshot)} holding row(s).")
 
-        # 2. Reasoning/TPA — plan the subgoals.
+        # 2. Reasoning/TPA - plan the subgoals.
         subgoals = self.mTPA.plan(goal, context_summary)
-        print(f"[Orchestrator] Task assignment — subgoals: {subgoals or '(none identified)'}")
+        print(f"[Orchestrator] Task assignment - subgoals: {subgoals or '(none identified)'}")
 
-        # 3-4. Reasoning/TSA + Action — set up and execute each subgoal.
+        # 3-4. Reasoning/TSA + Action - set up and execute each subgoal.
         for subgoal in subgoals:
             step = self.mTSA.setup(subgoal, goal, default_owner=owner_name)
             if step is None:
@@ -96,12 +96,12 @@ class CAgenticOrchestrator:
                 status_note += f" ({record.error})"
             print(f"[Orchestrator] {status_note}")
 
-        # 5. Reasoning/TPA — reflect over the full execution log.
+        # 5. Reasoning/TPA - reflect over the full execution log.
         reflection = self.mTPA.reflect(goal, self.mExecution.get_log())
-        print(f"[Orchestrator] Resource allocation — {self._summarize_resource_use(self.mExecution.get_log())}")
+        print(f"[Orchestrator] Resource allocation - {self._summarize_resource_use(self.mExecution.get_log())}")
         print(f"[Orchestrator] Reflection: {reflection['summary']}")
 
-        # 6. Memory — record the episode for future recall.
+        # 6. Memory - record the episode for future recall.
         self.mMemory.record_episode(goal, subgoals,
                                      [vars(r) for r in self.mExecution.get_log()],
                                      reflection["summary"], reflection["success"])

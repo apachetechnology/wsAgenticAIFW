@@ -28,6 +28,7 @@ class CDBInterface:
     #----------------------------------------------------------------------
     # Helper function
     NAME_WIDTH = 30
+    NAV_WIDTH = 10
     CLR_BLUE = "\033[94m"
     CLR_RED = "\033[91m"
     CLR_RESET = "\033[0m"
@@ -147,8 +148,30 @@ class CDBInterface:
         print(f"Inserted {inserted} entry for {fund_name}: "
               f"Units={holding_units}, NAV={nav_base}, Value={cost_value:,.2f}")
         
+    #--------------------------------------------------------------
+    # Delete the record
+    def DeleteFund(self, owner_name: str, fund_name: str) -> None:
+        """
+        Delete the holding entry for owner_name/fund_name. nav_history is
+        shared across owners (no owner_name column), so it's only purged
+        if no other owner still holds this fund.
+        """
+        deleted = self.mDB.delete_holding(owner_name, fund_name)
+        if not deleted:
+            print(f"No entry found for {fund_name} (owner={owner_name}).")
+            return
+
+        print(f"Deleted {deleted} holding row(s) for {fund_name} (owner={owner_name}).")
+
+        remaining = [r for r in self.mDB.fetch_by_fund_name(fund_name) if r["fund_name"] == fund_name]
+        if remaining:
+            print(f"{fund_name} still held by other owner(s) - nav_history retained.")
+        else:
+            hist_deleted = self.mDB.delete_nav_history(fund_name)
+            print(f"No other owner holds {fund_name} - removed {hist_deleted} nav_history row(s).")
+
     # Update records
-    # Corrections — rename a fund, or directly override nav_highest
+    # Corrections - rename a fund, or directly override nav_highest
     def UpdateFundName(self, old_fund_name: str, new_fund_name: str,
                         owner_name: Optional[str] = None) -> None:
         """
@@ -165,7 +188,7 @@ class CDBInterface:
     def ReviseHighestNav(self, fund_name: str, nav_highest: float) -> None:
         """
         Manually set nav_highest for every row matching fund_name exactly,
-        across all owners — overrides whatever is currently stored (no
+        across all owners - overrides whatever is currently stored (no
         "only if higher" check). Use to correct bad data, e.g. from a
         mismatched NAV lookup.
         """
@@ -185,7 +208,7 @@ class CDBInterface:
     def ReviseLowestNav(self, fund_name: str, nav_lowest: float) -> None:
         """
         Manually set nav_highest for every row matching fund_name exactly,
-        across all owners — overrides whatever is currently stored (no
+        across all owners - overrides whatever is currently stored (no
         "only if higher" check). Use to correct bad data, e.g. from a
         mismatched NAV lookup.
         """
@@ -230,7 +253,7 @@ class CDBInterface:
 
         return listFunds
 
-    # NAV updates — requires FetchNAVsAll() to have been called first.
+    # NAV updates - requires FetchNAVsAll() to have been called first.
     # Updates nav_latest (and nav_highest, if it's a new high) in place
     # for every holding in the database, or just those for one owner.
     def UpdateAllFundNAVs(self, owner_name: Optional[str] = None) -> None:
@@ -240,6 +263,7 @@ class CDBInterface:
             return
 
         updated = 0
+        unchanged = 0
         new_highs = 0
         new_lows = 0
         for nI, row in enumerate(rows):
@@ -250,6 +274,11 @@ class CDBInterface:
                 continue
 
             nav_previous = row["nav_latest"]
+            if nav_previous is not None and nav_latest == nav_previous:
+                print(f"#{nI}. No change for {fund_name}: NAV={nav_latest} - skipping update")
+                unchanged += 1
+                continue
+
             nav_change = (nav_latest - nav_previous) if nav_previous is not None else None
             if nav_change is not None:
                 self.mDB.update_nav_change(row["owner_name"], fund_name, nav_change)
@@ -266,7 +295,8 @@ class CDBInterface:
                 new_lows += 1
 
         print(f"\nUpdated NAV for {updated}/{len(rows)} entries "
-              f"({new_highs} new high{'s' if new_highs != 1 else ''}).")
+              f"({unchanged} unchanged, {new_highs} new high{'s' if new_highs != 1 else ''}, "
+              f"{new_lows} new low{'s' if new_lows != 1 else ''}).")
 
     def FundsSummaryV1(self, owner_name: Optional[str] = None) -> None:
         rows = self.mDB.fetch_by_owner(owner_name) if owner_name else self.mDB.fetch_all()
@@ -301,8 +331,8 @@ class CDBInterface:
             print("No entries found.")
             return
 
-        header = (f"{'Fund House & Scheme Name':<{self.NAME_WIDTH}} {'Units':>10} {'NAV Base':>10} "
-                  f"{'NAV Latest':>11} {'NAV Change':>11} {'Cost Value':>15} {'Expected Value':>15}")
+        header = (f"{'Fund House & Scheme Name':<{self.NAME_WIDTH}} {'Units':>{self.NAV_WIDTH}} {'NAV Base':>{self.NAV_WIDTH}} "
+                  f"{'NAV Latest':>{self.NAV_WIDTH}} {'NAV Change':>{self.NAV_WIDTH}} {'Cost Value':>15} {'Expected Value':>15}")
         print("_" * len(header))
         print(f"\n{header}")
         print("_" * len(header))
@@ -316,10 +346,10 @@ class CDBInterface:
             nav_base = r["nav_base"]
             
             nav_latest = r["nav_latest"]
-            nav_latest_str = f"{nav_latest:>11.4f}" if nav_latest is not None else f"{'N/A':>11}"
+            nav_latest_str = f"{nav_latest:>10.4f}" if nav_latest is not None else f"{'N/A':>{self.NAV_WIDTH}}"
 
             nav_change = r["nav_change"]
-            nav_change_str = self._colorize_single(nav_change, f"{nav_change:>11.4f}" if nav_change is not None else f"{'N/A':>11}")
+            nav_change_str = self._colorize_single(nav_change, f"{nav_change:>10.4f}" if nav_change is not None else f"{'N/A':>{self.NAV_WIDTH}}")
             
             cost_value = r["cost_value"]
 
@@ -347,8 +377,8 @@ class CDBInterface:
             f"{total_expected_value:>15,.2f}")
 
         print("_" * len(header))
-        print(f"{'TOTAL':<{self.NAME_WIDTH}} {'':>10} {'':>10} {'':>11} {'':>11}"
-              f"{total_cost_value:>15,.2f} {total_expected_str}")
+        print(f"{'TOTAL':<{self.NAME_WIDTH}} {'':>{self.NAV_WIDTH}} {'':>{self.NAV_WIDTH}} "
+              f"{'':>{self.NAV_WIDTH}} {'':>{self.NAV_WIDTH}} {total_cost_value:>15,.2f} {total_expected_str}")
         print("_" * len(header))
         print(f"\nTotal entries in DB: {len(rows)}")
 
@@ -366,8 +396,8 @@ class CDBInterface:
 
         print(f"\nOwner: {owner_name} | Funds: {len(rows)}")
 
-        header = (f"{'Fund House & Scheme Name':<{self.NAME_WIDTH}} {'Units':>10} {'Base NAV':>10} "
-                  f"{'Latest NAV':>11} {'P/L':>14} {'Highest NAV':>12} {'Projected P/L':>15} {'Lowest NAV':>12}")
+        header = (f"{'Fund House & Scheme Name':<{self.NAME_WIDTH}} {'Units':>{self.NAV_WIDTH}} {'Base NAV':>{self.NAV_WIDTH}} "
+                  f"{'Latest NAV':>{self.NAV_WIDTH}} {'P/L':>12} {'Highest NAV':>{self.NAV_WIDTH}} {'Projected P/L':>12} {'Lowest NAV':>{self.NAV_WIDTH}}")
         print("_" * len(header))
         print(f"\n{header}")
         print("_" * len(header))
@@ -380,19 +410,19 @@ class CDBInterface:
             base_nav = r["nav_base"]
 
             latest_nav = r["nav_latest"]
-            latest_nav_str = f"{latest_nav:>11.4f}" if latest_nav is not None else f"{'N/A':>11}"
+            latest_nav_str = f"{latest_nav:>10.4f}" if latest_nav is not None else f"{'N/A':>10}"
 
             pl = (latest_nav - base_nav) * units if latest_nav is not None else None
-            pl_str = self._colorize_single(pl, f"{pl:>14,.2f}" if pl is not None else f"{'N/A':>14}")
+            pl_str = self._colorize_single(pl, f"{pl:>12,.2f}" if pl is not None else f"{'N/A':>12}")
 
             highest_nav = r["nav_highest"]
-            highest_nav_str = f"{highest_nav:>12.4f}" if highest_nav is not None else f"{'N/A':>12}"
+            highest_nav_str = f"{highest_nav:>10.4f}" if highest_nav is not None else f"{'N/A':>{self.NAV_WIDTH}}"
 
             projected_pl = (highest_nav - base_nav) * units if highest_nav is not None else None
-            projected_str = self._colorize_single(projected_pl, f"{projected_pl:>15,.2f}" if projected_pl is not None else f"{'N/A':>15}")
+            projected_str = self._colorize_single(projected_pl, f"{projected_pl:>12,.2f}" if projected_pl is not None else f"{'N/A':>12}")
 
             lowest_nav = r["nav_lowest"]
-            lowest_nav_str = f"{lowest_nav:>12.4f}" if lowest_nav is not None else f"{'N/A':>12}"
+            lowest_nav_str = f"{lowest_nav:>10.4f}" if lowest_nav is not None else f"{'N/A':>{self.NAV_WIDTH}}"
 
             name_lines = textwrap.wrap(r["fund_name"], width=self.NAME_WIDTH) or [""]
             while len(name_lines) < 2:
@@ -411,12 +441,12 @@ class CDBInterface:
             if projected_pl is not None:
                 total_projected += projected_pl
 
-        total_pl_str = self._colorize_single(total_pl, f"{total_pl:>14,.2f}")
-        total_projected_str = self._colorize_single(total_projected, f"{total_projected:>15,.2f}")
+        total_pl_str = self._colorize_single(total_pl, f"{total_pl:>12,.2f}")
+        total_projected_str = self._colorize_single(total_projected, f"{total_projected:>12,.2f}")
 
         print("_" * len(header))
-        print(f"{'TOTAL':<{self.NAME_WIDTH}} {'':>10} {'':>10} {'':>11} "
-              f"{total_pl_str} {'':>12} {total_projected_str} {'':>12}")
+        print(f"{'TOTAL':<{self.NAME_WIDTH}} {'':>{self.NAV_WIDTH}} {'':>{self.NAV_WIDTH}} {'':>{self.NAV_WIDTH}} "
+              f"{total_pl_str} {'':>{self.NAV_WIDTH}} {total_projected_str} {'':>{self.NAV_WIDTH}}")
         print("_" * len(header))
 
 if __name__ == "__main__":

@@ -1,13 +1,13 @@
 """
 memory.py
-CAgentMemory — long-term (episodic) memory backing the Task Planning
+CAgentMemory - long-term (episodic) memory backing the Task Planning
 Agent's reflective loop, plus a lightweight short-term memory used by
 the Task Setup Agent (Paper Fig. 1: "Long-term Memory", "Short-term
 Memory", "Feedback Loops").
 
 Long-term memory is a small sqlite log of past orchestrator runs
 (goal, plan, outcome). Recall is a plain keyword-overlap score rather
-than a vector store — this keeps the framework dependency-free; swap
+than a vector store - this keeps the framework dependency-free; swap
 in a real embedding index later without touching the rest of the
 architecture (perception/reasoning/action are all memory-agnostic
 callers of this class).
@@ -40,7 +40,7 @@ class CAgentMemory:
         self._create_table()
 
         # Short-term memory: recent (subgoal, tool, result) turns for the
-        # *current* run — reset per orchestrator invocation.
+        # *current* run - reset per orchestrator invocation.
         self.mShortTerm: Deque[Dict] = deque(maxlen=SHORT_TERM_MEMORY_TURNS)
 
     # ------------------------------------------------------------------ #
