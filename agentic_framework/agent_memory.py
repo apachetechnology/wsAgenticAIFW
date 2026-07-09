@@ -17,7 +17,7 @@ import json
 import sqlite3
 
 from collections import deque
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Deque, Dict, List, Optional
 
@@ -122,3 +122,32 @@ class CAgentMemory:
 
     def close(self) -> None:
         self.mConn.close()
+
+    def check_subgoal_bias(self, max_share: float = 0.6, min_episodes: int = 20) -> Optional[str]:
+        """
+        Lightweight bias test (Table 17: AI/ML Risk Mgmt -> 'Bias testing').
+        Flags if the planner has become skewed toward one subgoal far beyond
+        what a healthy mix of user goals would produce - a signature of
+        either prompt-injection steering or memory poisoning biasing recall.
+        Returns a warning string, or None if within bounds.
+        """
+        rows = self.mConn.execute(
+            "SELECT subgoals_json FROM agent_episodes ORDER BY id DESC LIMIT 200"
+        ).fetchall()
+        if len(rows) < min_episodes:
+            return None
+        counts: Dict[str, int] = {}
+        total = 0
+        for r in rows:
+            for sg in json.loads(r["subgoals_json"]):
+                counts[sg] = counts.get(sg, 0) + 1
+                total += 1
+        if total == 0:
+            return None
+        worst_key, worst_count = max(counts.items(), key=lambda kv: kv[1])
+        share = worst_count / total
+        if share > max_share:
+            return (f"Subgoal '{worst_key}' accounts for {share:.0%} of recent "
+                    f"plans (>{max_share:.0%} threshold) - possible bias/poisoning.")
+        return None
+

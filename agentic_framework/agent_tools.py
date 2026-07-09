@@ -72,17 +72,56 @@ class CToolRegistry:
     # ------------------------------------------------------------------ #
     def _register_all(self) -> None:
 
+        # def update_navs(owner_name: Optional[str] = None, **_) -> Dict:
+        #     rows = self.mDB.fetch_by_owner(owner_name) if owner_name else self.mDB.fetch_all()
+        #     updated, failures = 0, []
+        #     for row in rows:
+        #         fund_name = row["fund_name"]
+        #         nav_data = self.mFetcher.resolve_fund(fund_name)
+        #         if not nav_data or nav_data.get("nav") is None:
+        #             failures.append(fund_name)
+        #             continue
+        #         nav_latest = nav_data["nav"]
+        #         prev = row["nav_latest"]
+        #         if prev is not None:
+        #             self.mDB.update_nav_change(row["owner_name"], fund_name, nav_latest - prev)
+        #         self.mDB.update_nav_latest(row["owner_name"], fund_name, nav_latest)
+        #         if row["nav_highest"] is None or nav_latest > row["nav_highest"]:
+        #             self.mDB.update_nav_highest(row["owner_name"], fund_name, nav_latest)
+        #         if row["nav_lowest"] is None or nav_latest < row["nav_lowest"]:
+        #             self.mDB.update_nav_lowest(row["owner_name"], fund_name, nav_latest)
+        #         updated += 1
+        #     return {"updated": updated, "total": len(rows), "failures": failures}
+
+        # Add to agent_tools.py inside _register_all(), replacing the current update_navs body
+
+        MAX_DAILY_MOVE = 0.30  # 30% single-day move is implausible for these fund types
+
         def update_navs(owner_name: Optional[str] = None, **_) -> Dict:
             rows = self.mDB.fetch_by_owner(owner_name) if owner_name else self.mDB.fetch_all()
-            updated, failures = 0, []
+            updated, failures, rejected = 0, [], []
             for row in rows:
                 fund_name = row["fund_name"]
                 nav_data = self.mFetcher.resolve_fund(fund_name)
                 if not nav_data or nav_data.get("nav") is None:
                     failures.append(fund_name)
                     continue
+
                 nav_latest = nav_data["nav"]
                 prev = row["nav_latest"]
+
+                # --- Evasion-resistant validation (Table 17: Security -> "Sensor
+                # data validation" / paper text: "adversarial robustness checks") ---
+                if nav_latest <= 0:
+                    rejected.append({"fund_name": fund_name, "reason": "non-positive NAV"})
+                    continue
+                if prev is not None and prev > 0:
+                    move = abs(nav_latest - prev) / prev
+                    if move > MAX_DAILY_MOVE:
+                        rejected.append({"fund_name": fund_name, "reason": f"{move:.0%} jump vs prior NAV"})
+                        continue
+                # --------------------------------------------------------------
+
                 if prev is not None:
                     self.mDB.update_nav_change(row["owner_name"], fund_name, nav_latest - prev)
                 self.mDB.update_nav_latest(row["owner_name"], fund_name, nav_latest)
@@ -91,7 +130,7 @@ class CToolRegistry:
                 if row["nav_lowest"] is None or nav_latest < row["nav_lowest"]:
                     self.mDB.update_nav_lowest(row["owner_name"], fund_name, nav_latest)
                 updated += 1
-            return {"updated": updated, "total": len(rows), "failures": failures}
+            return {"updated": updated, "total": len(rows), "failures": failures, "rejected": rejected}
 
         def record_history(owner_name: Optional[str] = None, **_) -> Dict:
             self.mAnalyzer.RecordTodayHistory(owner_name)
