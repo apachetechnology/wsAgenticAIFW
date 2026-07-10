@@ -98,6 +98,9 @@ class CFetchNAV:
         best matches (best first). No network call - uses the cache
         built once in __init__.
         """
+        if not hasattr(self, "_all_schemes"):
+            self.GetNAVsAll(bForceUpdate=False)
+
         query_norm = self._normalize(fund_name)
         query_wants_idcw = any(term in query_norm for term in self.cEXCLUDED_PLAN_TERMS)
         query_wants_direct = "DIRECT" in query_norm

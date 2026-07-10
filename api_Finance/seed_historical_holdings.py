@@ -163,8 +163,6 @@ class CDatabaseBuilder:
 if __name__ == "__main__":
     print('*************')
     # As given: (fund_name, cost_value) - 100,000 into each fund.
-    #objFNAV.GetNAVsAll()   # loads/refreshes the scheme cache used by search_fund_by_name
-
     #seed_historical_holdings(objDB, objFNAV, owner_name="SG",
     #                          listFunds=LIST_FUNDS, months_back=3)
     #objDB.close()

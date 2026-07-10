@@ -41,6 +41,7 @@ def build_orchestrator(allow_writes: bool = True) -> CAgenticOrchestrator:
 
     objDB = CHoldingsDatabase()
     objFNAV = CFetchNAV()
+    objFNAV.GetNAVsAll(bForceUpdate=False)
     objAnalyzer = CPerformanceAnalyzer(objDB)
     objDBInterface = CDBInterface()
 
