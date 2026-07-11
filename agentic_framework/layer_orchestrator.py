@@ -14,7 +14,8 @@ Flow for a single call to run():
     6. Memory       : record_episode() for future recall
 """
 
-from typing import Dict, List, Optional, Set
+import textwrap
+from typing import Dict, Optional, Set
 
 from api_Finance.database import CHoldingsDatabase
 from api_Finance.nav_fetcher import CFetchNAV
@@ -59,8 +60,8 @@ class CAgenticOrchestrator:
     # ------------------------------------------------------------------ #
     # Main entry point
     # ------------------------------------------------------------------ #
-    def run(self, goal: str, owner_name: Optional[str] = None,
-            extra_args: Optional[Dict[str, Dict]] = None) -> Dict:
+    def run(self, strGoal: str, owner_name: Optional[str] = None,
+            extra_args: Optional[Dict[str, Dict]] = None, aWidth=80) -> Dict:
         """
         extra_args: optional {subgoal: {arg_name: value}} overrides/additions
         for subgoals the TSA can't reliably fill from free text alone
@@ -71,45 +72,47 @@ class CAgenticOrchestrator:
         self.mMemory.reset_short_term()
 
         # 1. Perception - task assignment starts once context is gathered.
-        snapshot = self.mPerception.gather_portfolio_snapshot(owner_name)
-        context_summary = self.mPerception.describe_context(snapshot)
-        print(f"[Orchestrator] Context gathered: {len(snapshot)} holding row(s).")
+        dictSnapshot = self.mPerception.gather_portfolio_snapshot(owner_name)
+        strContextSummary = self.mPerception.describe_context(dictSnapshot)
+        print_wrap(f"[Orchestrator] Context gathered: {len(dictSnapshot)} holding row(s).")
 
         # 2. Reasoning/TPA - plan the subgoals.
-        subgoals = self.mTPA.plan(goal, context_summary)
-        print(f"[Orchestrator] Task assignment - subgoals: {subgoals or '(none identified)'}")
+        listSubgoals = self.mTPA.plan(strGoal, strContextSummary)
+        print_wrap(f"[Orchestrator] Task assignment - subgoals: {listSubgoals or '(none identified)'}")
 
         # 3-4. Reasoning/TSA + Action - set up and execute each subgoal.
-        for subgoal in subgoals:
-            step = self.mTSA.setup(subgoal, goal, default_owner=owner_name)
-            if step is None:
+        for subgoal in listSubgoals:
+            dictStep = self.mTSA.setup(subgoal, strGoal, default_owner=owner_name)
+            if dictStep is None:
                 self.mMemory.add_short_term(subgoal, tool="?", ok=False, note="no tool mapping")
                 continue
 
-            step["args"].update(extra_args.get(subgoal, {}))
-            record = self.mExecution.run_step(step["tool"], step["args"])
-            self.mMemory.add_short_term(subgoal, step["tool"], record.status == "ok",
-                                         note=record.error)
+            dictStep["args"].update(extra_args.get(subgoal, {}))
+            objExeRecord = self.mExecution.run_step(dictStep["tool"], dictStep["args"])
+            self.mMemory.add_short_term(subgoal, dictStep["tool"], objExeRecord.status == "ok",
+                                         note=objExeRecord.error)
 
-            status_note = f"{step['tool']} -> {record.status}"
-            if record.error:
-                status_note += f" ({record.error})"
-            print(f"[Orchestrator] {status_note}")
+            strStatusNote = f"{dictStep['tool']} -> {objExeRecord.status}"
+            if objExeRecord.error:
+                strStatusNote += f" ({objExeRecord.error})"
+            print_wrap(f"[Orchestrator] {strStatusNote}")
 
         # 5. Reasoning/TPA - reflect over the full execution log.
-        reflection = self.mTPA.reflect(goal, self.mExecution.get_log())
+        dictReflection = self.mTPA.reflect(strGoal, self.mExecution.get_log())
         print_wrap(f"[Orchestrator] Resource allocation - {self._summarize_resource_use(self.mExecution.get_log())}")
-        print_wrap(f"[Orchestrator] Reflection: {reflection['summary']}")
+        print_wrap(f"[Orchestrator] Reflection: {dictReflection['summary']}")
 
         # 6. Memory - record the episode for future recall.
-        self.mMemory.record_episode(goal, subgoals,
+        self.mMemory.record_episode(strGoal, listSubgoals,
                              [vars(r) for r in self.mExecution.get_log()],
-                             reflection["summary"], reflection["success"],
+                             dictReflection["summary"], dictReflection["success"],
                              owner_name=owner_name)
 
+        #strSubgoals = "\n".join(str(record) for record in listSubgoals)
+
         return {
-            "goal": goal,
-            "subgoals": subgoals,
-            "execution_log": self.mExecution.get_log(),
-            "reflection": reflection,
+            "Goal": textwrap.fill(strGoal, width=aWidth),
+            "Subgoals": listSubgoals,
+            "Execution_log": self.mExecution.get_log(),
+            "Reflection": dictReflection,
         }
