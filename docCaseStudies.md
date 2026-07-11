@@ -7,7 +7,7 @@
 # Case studies
 
 ## (A) Reasoning-layer integrity (hallucination adjacent to data poisoning)
-This case instantiates the Data Poisoning concern (attack class 03) mapped to the Reasoning layer, refined here as a hallucination producing equivalent integrity consequences.
+This case instantiates the *Data Poisoning* concern (attack class 03) mapped to the Reasoning layer, refined here as a hallucination producing equivalent integrity consequences.
 
 | Field | Content |
 | :--- | :--- |
@@ -21,7 +21,7 @@ This case instantiates the Data Poisoning concern (attack class 03) mapped to th
 | **Engineered validation (fault injection)** | `test_reasoning_redteam.py` (drafted earlier) forces the TPA's LLM call to return out-of-catalog subgoal strings and asserts the whitelist strips them - validates the same control holds even under a deliberately poisoned response, complementing this naturally observed hallucination. |
 
 ## (B) Perception-layer robustness (evasion / sensor-feed integrity)
-This instantiates the \emph{Evasion Attack} concern (attack class 01) for the Perception layer and highlights an autonomy-specific tool-misuse risk (adjacent to Resource Manipulation, class 08).
+This instantiates the *Evasion Attack* concern (attack class 01) for the Perception layer and highlights an autonomy-specific tool-misuse risk (adjacent to Resource Manipulation, class 08).
 
 | Field | Content |
 | :--- | :--- |
