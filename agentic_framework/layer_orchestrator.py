@@ -22,7 +22,7 @@ from api_Finance.performance_analyzer import CPerformanceAnalyzer
 from api_Finance.db_interface import CDBInterface
 from api_server.Ollama_server import COllamaServer
 
-from config_agent import DEFAULT_ALLOWED_PERMISSIONS
+from config_agent import DEFAULT_ALLOWED_PERMISSIONS, print_wrap
 from agentic_framework.agent_memory import CAgentMemory
 from agentic_framework.layer_perception import CPerceptionLayer
 from agentic_framework.agent_tools import CToolRegistry
@@ -98,13 +98,14 @@ class CAgenticOrchestrator:
 
         # 5. Reasoning/TPA - reflect over the full execution log.
         reflection = self.mTPA.reflect(goal, self.mExecution.get_log())
-        print(f"[Orchestrator] Resource allocation - {self._summarize_resource_use(self.mExecution.get_log())}")
-        print(f"[Orchestrator] Reflection: {reflection['summary']}")
+        print_wrap(f"[Orchestrator] Resource allocation - {self._summarize_resource_use(self.mExecution.get_log())}")
+        print_wrap(f"[Orchestrator] Reflection: {reflection['summary']}")
 
         # 6. Memory - record the episode for future recall.
         self.mMemory.record_episode(goal, subgoals,
-                                     [vars(r) for r in self.mExecution.get_log()],
-                                     reflection["summary"], reflection["success"])
+                             [vars(r) for r in self.mExecution.get_log()],
+                             reflection["summary"], reflection["success"],
+                             owner_name=owner_name)
 
         return {
             "goal": goal,

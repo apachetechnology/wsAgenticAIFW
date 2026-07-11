@@ -7,6 +7,7 @@ perception, reasoning, action layers).
 
 from pathlib import Path
 from typing import Dict
+import textwrap
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -56,3 +57,11 @@ SUBGOAL_CATALOG: Dict[str, str] = {
     "rename_fund":        "Rename a fund across one or all owners.",
     "plot_fund":          "Plot NAV history for a fund with base/highest/lowest lines.",
 }
+
+def print_wrap(aText, aWidth=80):
+    """Pretty print preserving paragraph breaks."""
+    for para in aText.split("\n"):
+        if para.strip():
+            print(textwrap.fill(para, width=aWidth))
+        else:
+            print()          # preserve blank lines between paragraphs

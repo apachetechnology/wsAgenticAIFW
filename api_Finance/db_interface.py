@@ -449,5 +449,18 @@ class CDBInterface:
               f"{total_pl_str} {'':>{self.NAV_WIDTH}} {total_projected_str} {'':>{self.NAV_WIDTH}}")
         print("_" * len(header))
 
+    # Cross-store erasure orchestration - a memory-only erasure isn't a real GDPR 
+    # erasure if the holdings/nav_history data still lives in CHoldingsDatabase
+    def ForgetDataSubject(self, owner_name: str, agent_memory=None) -> None:
+        """
+        Full erasure across both stores for one data subject: holdings +
+        (if provided) agentic long-term memory. Ties GDPR erasure to a single
+        callable, rather than leaving it split across modules.
+        """
+        for fund_name in self.Funds_by_owner(owner_name):
+            self.DeleteFund(owner_name, fund_name)
+        if agent_memory is not None:
+            agent_memory.forget_owner(owner_name)
+
 if __name__ == "__main__":
     objConsole = CDBInterface()

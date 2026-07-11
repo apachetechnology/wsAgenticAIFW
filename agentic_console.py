@@ -14,8 +14,6 @@ agentic_framework/agent_config.py (MODEL_TPA, MODEL_TSA) pulled, e.g.:
     ollama pull gemma3:1b
 """
 
-import textwrap
-
 from api_server.Ollama_server import COllamaServer
 from api_Finance.database import CHoldingsDatabase
 from api_Finance.nav_fetcher import CFetchNAV
@@ -24,14 +22,6 @@ from api_Finance.db_interface import CDBInterface
 
 from config_agent import DEFAULT_ALLOWED_PERMISSIONS, ALL_PERMISSIONS
 from agentic_framework.layer_orchestrator import CAgenticOrchestrator
-
-def print_wrap(aText, aWidth=80):
-    """Pretty print preserving paragraph breaks."""
-    for para in aText.split("\n"):
-        if para.strip():
-            print(textwrap.fill(para, width=aWidth))
-        else:
-            print()          # preserve blank lines between paragraphs
 
 def build_orchestrator(allow_writes: bool = True) -> CAgenticOrchestrator:
     objOS = COllamaServer()

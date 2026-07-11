@@ -50,34 +50,53 @@ class CAgentMemory:
         self.mConn.execute("""
             CREATE TABLE IF NOT EXISTS agent_episodes (
                 id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                owner_name    TEXT,
                 goal          TEXT NOT NULL,
                 subgoals_json TEXT,
                 results_json  TEXT,
                 reflection    TEXT,
                 success       INTEGER,
+                quarantined   INTEGER DEFAULT 0,
                 created_at    TEXT NOT NULL
+            );
+        """)
+        self.mConn.execute("""
+            CREATE TABLE IF NOT EXISTS privacy_audit_log (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                action      TEXT NOT NULL,     -- 'purge' | 'erase' | 'quarantine'
+                detail      TEXT,              -- e.g. "3 rows, owner=<redacted>"
+                created_at  TEXT NOT NULL
             );
         """)
         self.mConn.commit()
 
     # ------------------------------------------------------------------ #
     # Long-term (episodic) memory
+    # Data minimization at write time (GDPR Art. 5(1)(c) - minimization by design)
     # ------------------------------------------------------------------ #
-    def record_episode(self, goal: str, subgoals: List[str],
-                        results: List[Dict], reflection: str,
-                        success: bool) -> int:
+    _PII_ARG_KEYS = {"owner_name"}  # redact before persisting to results_json
+
+    def record_episode(self, goal: str, subgoals: List[str], results: List[Dict],
+                        reflection: str, success: bool,
+                        owner_name: Optional[str] = None) -> int:
+        # Minimize: strip PII out of the serialized tool-args blob; the identity
+        # is captured once, in its own indexed column, instead of scattered
+        # through free-text goal strings and nested JSON.
+        redacted_results = []
+        for r in results:
+            r = dict(r)
+            if isinstance(r.get("args"), dict):
+                r["args"] = {k: ("<redacted>" if k in self._PII_ARG_KEYS else v)
+                            for k, v in r["args"].items()}
+            redacted_results.append(r)
+
         cur = self.mConn.execute(
             "INSERT INTO agent_episodes "
-            "(goal, subgoals_json, results_json, reflection, success, created_at) "
-            "VALUES (?, ?, ?, ?, ?, ?)",
-            (
-                goal,
-                json.dumps(subgoals),
-                json.dumps(results, default=str),
-                reflection,
-                int(success),
-                datetime.now().isoformat(timespec="seconds"),
-            ),
+            "(owner_name, goal, subgoals_json, results_json, reflection, success, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?)",
+            (owner_name, goal, json.dumps(subgoals),
+            json.dumps(redacted_results, default=str), reflection, int(success),
+            datetime.now().isoformat(timespec="seconds")),
         )
         self.mConn.commit()
         return cur.lastrowid
@@ -150,4 +169,64 @@ class CAgentMemory:
             return (f"Subgoal '{worst_key}' accounts for {share:.0%} of recent "
                     f"plans (>{max_share:.0%} threshold) - possible bias/poisoning.")
         return None
+    
+    # Storage limitation (GDPR Art. 5(1)(e))
+    # Added on 11/07/2026
+    def purge_older_than(self, days: int = 90) -> int:
+        cutoff = (datetime.now() - timedelta(days=days)).isoformat(timespec="seconds")
+        cur = self.mConn.execute("DELETE FROM agent_episodes WHERE created_at < ?", (cutoff,))
+        self.mConn.commit()
+        self._log_privacy_action("purge", f"{cur.rowcount} row(s) older than {days}d")
+        return cur.rowcount
+    
+    # Right to erasure (GDPR Art. 17)
+    # Added on 11/07/2026
+    def forget_owner(self, owner_name: str) -> int:
+        """
+        Erase all long-term memory tied to one data subject. Also strips any
+        residual PII from goal text as a fallback, in case older rows (created
+        before the owner_name column existed) still carry the identifier in
+        free text.
+        """
+        cur = self.mConn.execute(
+            "DELETE FROM agent_episodes WHERE owner_name = ?", (owner_name,)
+        )
+        deleted = cur.rowcount
+        # Fallback for legacy rows lacking the structured column:
+        cur2 = self.mConn.execute(
+            "DELETE FROM agent_episodes WHERE goal LIKE ?", (f"%{owner_name}%",)
+        )
+        deleted += cur2.rowcount
+        self.mConn.commit()
+        self._log_privacy_action("erase", f"{deleted} row(s) for owner=<redacted>")
+        return deleted
+
+    # Right to erasure (GDPR Art. 17)
+    # Added on 11/07/2026
+    def _log_privacy_action(self, action: str, detail: str) -> None:
+        """Accountability trail (GDPR Art. 5(2)) - records that an erasure/
+        retention action occurred, without retaining the erased PII itself."""
+        self.mConn.execute(
+            "INSERT INTO privacy_audit_log (action, detail, created_at) VALUES (?, ?, ?)",
+            (action, detail, datetime.now().isoformat(timespec="seconds")),
+        )
+        self.mConn.commit()
+
+    # Cross-store erasure orchestration - a memory-only erasure isn't a real GDPR 
+    # erasure if the holdings/nav_history data still lives in CHoldingsDatabase
+    # Added on 11/07/2026
+    def quarantine_episode(self, episode_id: int, reason: str) -> None:
+        """
+        Excludes a specific episode from future recall_similar() results
+        without deleting the audit record outright - useful when
+        check_subgoal_bias() or manual review flags an entry as suspect
+        (e.g. poisoned goal text steering the planner). This is the same
+        erasure/retention machinery built for GDPR, repurposed as an
+        incident-response tool for Data Poisoning.
+        """
+        self.mConn.execute(
+            "UPDATE agent_episodes SET quarantined = 1 WHERE id = ?", (episode_id,)
+        )
+        self.mConn.commit()
+        self._log_privacy_action("quarantine", f"episode {episode_id}: {reason}")
 
