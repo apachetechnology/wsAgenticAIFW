@@ -108,11 +108,10 @@ class CAgenticOrchestrator:
                              dictReflection["summary"], dictReflection["success"],
                              owner_name=owner_name)
 
-        #strSubgoals = "\n".join(str(record) for record in listSubgoals)
+        print("-" * 80)
+        print("Goal:", textwrap.fill(strGoal, width=aWidth))
+        print("Subgoals:", listSubgoals)
+        self.mExecution.print_log_tabular()
+        print("-" * 80)
 
-        return {
-            "Goal": textwrap.fill(strGoal, width=aWidth),
-            "Subgoals": listSubgoals,
-            "Execution_log": self.mExecution.get_log(),
-            "Reflection": dictReflection,
-        }
+        return dictReflection
