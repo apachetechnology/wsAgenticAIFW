@@ -112,6 +112,7 @@ class CAgenticOrchestrator:
         print("Goal:", textwrap.fill(strGoal, width=aWidth))
         print("Subgoals:", listSubgoals)
         self.mExecution.print_log_tabular()
-        print("-" * 80)
+        
+        print('\n' + "_" * 80)
 
         return dictReflection

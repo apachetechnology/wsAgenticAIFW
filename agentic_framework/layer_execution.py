@@ -121,10 +121,10 @@ class CExecutionEnvironment:
                 result_str = json.dumps(record.result, indent=2, default=str) + "\n"
                 print(f"    Result:\n{result_str}")
 
-
     def print_log_tabular(self, bVerbose: bool = True) -> None:
         """Pretty-print the execution log with special handling for portfolio reports."""
         print(f"=== Execution Log ({len(self.mLog)} steps) ===\n")
+        cLINE_WIDTH = 110
         
         for i, record in enumerate(self.mLog, 1):
             status_emoji = {"ok": "✅", "error": "❌", "denied": "🚫"}.get(record.status, "⚠️")
@@ -149,10 +149,10 @@ class CExecutionEnvironment:
                     
                     if funds:
                         print("    Portfolio Summary:")
-                        print("    " + "-" * 100)
+                        print("    " + "-" * cLINE_WIDTH)
                         # Header
-                        print(f"    {'Fund Name':<40} {'Owner':<10} {'Cost Value':>12} {'Expected Value':>15} {'P&L':>12}")
-                        print("    " + "-" * 100)
+                        print(f"    {'Fund Name':<55} {'Owner':6} {'Cost Value':>12} {'Expected Value':>15} {'P&L':>12}")
+                        print("    " + "-" * cLINE_WIDTH)
                         
                         for fund in funds:
                             fund_name = fund.get("fund_name", "")
@@ -162,20 +162,15 @@ class CExecutionEnvironment:
                             pnl = expected - cost
                             pnl_str = f"{pnl:+.2f}"
                             
-                            print(f"    {fund_name:<40} {owner:<10} {cost:>12.2f} {expected:>15.2f} {pnl_str:>12}")
+                            print(f"    {fund_name:<55} {owner:<6} {cost:>12.2f} {expected:>15.2f} {pnl_str:>12}")
                         
-                        print("    " + "-" * 100)
+                        print("    " + "-" * cLINE_WIDTH)
                         if total_cost is not None and total_expected is not None:
                             total_pnl = total_expected - total_cost
-                            print(f"    {'TOTAL':<70} {total_cost:>12.2f} {total_expected:>15.2f} {total_pnl:>+12.2f}")
-                    # else:
-                    #     # Fallback to JSON if no funds list
-                    #     print(json.dumps(record.result, indent=2, default=str))
+                            print(f"    {'TOTAL':<62} {total_cost:>12.2f} {total_expected:>15.2f} {total_pnl:>+12.2f}")
+                            print("    " +  "-" * cLINE_WIDTH)        
                 else:
                     # Normal result printing for other tools
                     result_str = json.dumps(record.result, indent=2, default=str)
-                    if len(result_str) > 1200:
-                        result_str = result_str[:1150] + "\n... (truncated)"
                     print(result_str)
             
-            print("-" * 90)        
