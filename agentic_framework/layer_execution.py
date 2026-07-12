@@ -6,6 +6,8 @@ the Action layer. Tool-chain steps produced by the Task Setup Agent are
 run here, never invoked directly.
 """
 import json
+import inspect
+
 from dataclasses import dataclass, field, asdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
@@ -46,6 +48,16 @@ class CExecutionEnvironment:
         self.mAllowedPermissions = set(allowed_permissions)
         self.mLog: List[CExecutionRecord] = []
 
+    # Added on 12/07/2026
+    def _missing_required_args(self, func, args: Dict) -> List[str]:
+        sig = inspect.signature(func)
+        return [
+            name for name, param in sig.parameters.items()
+            if param.kind != inspect.Parameter.VAR_KEYWORD
+            and param.default is inspect.Parameter.empty
+            and name not in args
+        ]
+
     def run_step(self, tool_name: str, args: Dict) -> CExecutionRecord:
         tool = self.mRegistry.get(tool_name)
 
@@ -63,13 +75,23 @@ class CExecutionEnvironment:
             )
             self.mLog.append(record)
             return record
+        
+        missing_args = self._missing_required_args(tool.func, args)
+        if missing_args:
+            record = CExecutionRecord(
+                tool_name, args, "skipped",
+                error=f"Missing required argument(s) for '{tool_name}': "
+                    f"{', '.join(missing_args)}. Pass them via "
+                    f"run(..., extra_args={{'<subgoal>': {{...}}}}).",
+            )
+            self.mLog.append(record)
+            return record
 
         try:
             result = tool.func(**args)
             record = CExecutionRecord(tool_name, args, "ok", result=result)
-        except Exception as e:  # noqa: BLE001 - sandbox must not propagate
+        except Exception as e:
             record = CExecutionRecord(tool_name, args, "error", error=str(e))
-
         self.mLog.append(record)
         return record
 

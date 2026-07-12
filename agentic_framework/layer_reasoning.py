@@ -31,16 +31,45 @@ from agentic_framework.agent_memory import CAgentMemory
 from agentic_framework.agent_tools import SUBGOAL_TO_TOOL
 
 ##################################################################################
+# def _extract_json(text: str):
+#     """Best-effort JSON extraction from an LLM response (small models
+#     sometimes wrap JSON in prose or code fences)."""
+#     match = re.search(r"\{.*\}|\[.*\]", text, re.DOTALL)
+#     if not match:
+#         return None
+#     try:
+#         return json.loads(match.group(0))
+#     except json.JSONDecodeError:
+#         return None
+
+def _find_json_span(text: str, open_ch: str, close_ch: str) -> Optional[str]:
+    """Bracket-matched span, not a greedy regex - a naive `\\{.*\\}` with
+    DOTALL spans from the first opening bracket to the LAST closing one
+    in the whole response, which misfires if the model's prose contains
+    any stray braces after the real JSON."""
+    start = text.find(open_ch)
+    while start != -1:
+        depth = 0
+        for i in range(start, len(text)):
+            if text[i] == open_ch:
+                depth += 1
+            elif text[i] == close_ch:
+                depth -= 1
+                if depth == 0:
+                    return text[start:i + 1]
+        start = text.find(open_ch, start + 1)
+    return None
+
+
 def _extract_json(text: str):
-    """Best-effort JSON extraction from an LLM response (small models
-    sometimes wrap JSON in prose or code fences)."""
-    match = re.search(r"\{.*\}|\[.*\]", text, re.DOTALL)
-    if not match:
-        return None
-    try:
-        return json.loads(match.group(0))
-    except json.JSONDecodeError:
-        return None
+    for open_ch, close_ch in (("[", "]"), ("{", "}")):
+        span = _find_json_span(text, open_ch, close_ch)
+        if span:
+            try:
+                return json.loads(span)
+            except json.JSONDecodeError:
+                continue
+    return None
 
 
 ############################################################################
@@ -57,43 +86,6 @@ class CTaskPlanningAgent:
     # ------------------------------------------------------------------ #
     # Planning
     # ------------------------------------------------------------------ #
-    def plan(self, goal: str, context_summary: str) -> List[str]:
-        catalog_lines = "\n".join(f'- "{k}": {v}' for k, v in SUBGOAL_CATALOG.items())
-        recalled = self.mMemory.recall_similar(goal, top_n=2)
-        memory_note = ""
-        if recalled:
-            memory_note = "Similar past run(s): " + "; ".join(
-                f'"{r["goal"]}" -> {"succeeded" if r["success"] else "failed"}' for r in recalled
-            )
-
-        system_prompt = (
-            "You are the Task Planning Agent for a mutual-fund tracker. "
-            "Choose which of the following subgoals (by exact key) are needed "
-            "to satisfy the user's goal. Respond with ONLY a JSON array of "
-            "subgoal keys, in the order they should run, nothing else.\n\n"
-            f"Subgoals:\n{catalog_lines}"
-        )
-        user_prompt = f"Portfolio context:\n{context_summary}\n\n{memory_note}\n\nGoal: {goal}"
-
-        try:
-            messages = [
-                self.mOS.build_message("system", system_prompt),
-                self.mOS.build_message("user", user_prompt),
-            ]
-            response = self.mOS.get_response(messages, aModel=self.mModel)
-            parsed = _extract_json(response)
-        except Exception:
-            parsed = None
-
-        subgoals = [s for s in (parsed or []) if isinstance(s, str) and s in SUBGOAL_CATALOG]
-        if subgoals:
-            return subgoals
-
-        # Deterministic fallback: keyword match the goal text against the
-        # catalog, so the framework still functions if the LLM is down or
-        # returns garbage.
-        return self._fallback_plan(goal)
-
     @staticmethod
     def _fallback_plan(goal: str) -> List[str]:
         goal_upper = goal.upper()
@@ -109,6 +101,65 @@ class CTaskPlanningAgent:
             "plot_fund":          ("PLOT", "CHART", "GRAPH"),
         }
         return [key for key, kws in keyword_map.items() if any(kw in goal_upper for kw in kws)]
+
+    def plan(self, goal: str, context_summary: str) -> List[str]:
+        catalog_lines = "\n".join(f'- "{k}": {v}' for k, v in SUBGOAL_CATALOG.items())
+        recalled = self.mMemory.recall_similar(goal, top_n=2)
+        memory_note = ""
+        if recalled:
+            memory_note = "Similar past run(s): " + "; ".join(
+                f'"{r["goal"]}" -> {"succeeded" if r["success"] else "failed"}' for r in recalled
+            )
+
+        # system_prompt = (
+        #     "You are the Task Planning Agent for a mutual-fund tracker. "
+        #     "Choose which of the following subgoals (by exact key) are needed "
+        #     "to satisfy the user's goal. Respond with ONLY a JSON array of "
+        #     "subgoal keys, in the order they should run, nothing else.\n\n"
+        #     f"Subgoals:\n{catalog_lines}"
+        # )
+
+        # Updated on 12/07/2026
+        system_prompt = (
+            "You are the Task Planning Agent for a mutual-fund tracker. "
+            "Choose ONLY the subgoals (by exact key) that are actually needed for "
+            "the user's goal below - most goals need just 1 to 4 subgoals. Do NOT "
+            "return the entire list of keys shown below; that's a menu, not an "
+            "answer. Respond with ONLY a JSON array of the chosen subgoal keys, "
+            "in the order they should run, nothing else.\n\n"
+            f"Subgoals:\n{catalog_lines}"
+        )
+
+        user_prompt = f"Portfolio context:\n{context_summary}\n\n{memory_note}\n\nGoal: {goal}"
+
+        try:
+            messages = [
+                self.mOS.build_message("system", system_prompt),
+                self.mOS.build_message("user", user_prompt),
+            ]
+            response = self.mOS.get_response(messages, aModel=self.mModel)
+            parsed = _extract_json(response)
+        except Exception:
+            parsed = None
+
+        # subgoals = [s for s in (parsed or []) if isinstance(s, str) and s in SUBGOAL_CATALOG]
+        # if subgoals:
+        #     return subgoals
+
+        # # Deterministic fallback: keyword match the goal text against the
+        # # catalog, so the framework still functions if the LLM is down or
+        # # returns garbage.
+        # return self._fallback_plan(goal)
+
+        subgoals = [s for s in (parsed or []) if isinstance(s, str) and s in SUBGOAL_CATALOG]
+        if subgoals and set(subgoals) == set(SUBGOAL_CATALOG):
+            print("[TPA] LLM returned the entire subgoal catalog - treating that as "
+                "an echoed menu, not a real plan. Falling back to keyword planning.")
+            subgoals = []
+
+        if subgoals:
+            return subgoals
+        return self._fallback_plan(goal)
 
     # ------------------------------------------------------------------ #
     # Reflection (meta-reasoning / self-critique over the execution log)
