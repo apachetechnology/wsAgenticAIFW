@@ -30,18 +30,9 @@ from config_agent import MODEL_TPA, MODEL_TSA, SUBGOAL_CATALOG
 from agentic_framework.agent_memory import CAgentMemory
 from agentic_framework.agent_tools import SUBGOAL_TO_TOOL
 
-##################################################################################
-# def _extract_json(text: str):
-#     """Best-effort JSON extraction from an LLM response (small models
-#     sometimes wrap JSON in prose or code fences)."""
-#     match = re.search(r"\{.*\}|\[.*\]", text, re.DOTALL)
-#     if not match:
-#         return None
-#     try:
-#         return json.loads(match.group(0))
-#     except json.JSONDecodeError:
-#         return None
+CURRENCY_SYMBOL = "\u20b9"  # ₹ — all figures in this system are INR
 
+##################################################################################
 def _find_json_span(text: str, open_ch: str, close_ch: str) -> Optional[str]:
     """Bracket-matched span, not a greedy regex - a naive `\\{.*\\}` with
     DOTALL spans from the first opening bracket to the LAST closing one
@@ -60,7 +51,6 @@ def _find_json_span(text: str, open_ch: str, close_ch: str) -> Optional[str]:
         start = text.find(open_ch, start + 1)
     return None
 
-
 def _extract_json(text: str):
     for open_ch, close_ch in (("[", "]"), ("{", "}")):
         span = _find_json_span(text, open_ch, close_ch)
@@ -71,6 +61,49 @@ def _extract_json(text: str):
                 continue
     return None
 
+def _grounded_facts(execution_log) -> Dict[str, str]:
+    """
+    Pull concrete, already-computed figures straight out of tool results
+    so the reflection prompt has real numbers to paraphrase instead of
+    inventing its own. Direct fix for the fabricated-NAV/return-figure
+    hallucination observed in agentic runs (Paper Case Study A).
+    """
+    facts = {}
+    for record in execution_log:
+        if record.status != "ok" or not isinstance(record.result, dict):
+            continue
+        result = record.result
+
+        if record.tool == "portfolio_report":
+            total_cost = result.get("total_cost_value")
+            total_expected = result.get("total_expected_value")
+            if total_cost is not None and total_expected is not None:
+                pnl = total_expected - total_cost
+                facts["portfolio_report"] = (
+                    f"Total cost value {CURRENCY_SYMBOL}{total_cost:,.2f}, "
+                    f"total expected value {CURRENCY_SYMBOL}{total_expected:,.2f}, "
+                    f"P&L {CURRENCY_SYMBOL}{pnl:,.2f}."
+                )
+
+        elif record.tool == "flag_risk":
+            flagged = result.get("flagged", [])
+            facts["flag_risk"] = (
+                f"{len(flagged)} fund(s) flagged past the "
+                f"{result.get('threshold', 0):.0%} drawdown threshold."
+            )
+
+        elif record.tool == "update_navs":
+            facts["update_navs"] = (
+                f"{result.get('updated', 0)} of {result.get('total', 0)} fund(s) "
+                f"had NAVs updated; {len(result.get('failures', []))} failure(s)."
+            )
+
+        elif record.tool == "performance_review":
+            facts["performance_review"] = (
+                f"Performance computed for {len(result.get('funds', []))} fund(s)."
+            )
+
+    return facts
 
 ############################################################################
 #
@@ -142,15 +175,6 @@ class CTaskPlanningAgent:
         except Exception:
             parsed = None
 
-        # subgoals = [s for s in (parsed or []) if isinstance(s, str) and s in SUBGOAL_CATALOG]
-        # if subgoals:
-        #     return subgoals
-
-        # # Deterministic fallback: keyword match the goal text against the
-        # # catalog, so the framework still functions if the LLM is down or
-        # # returns garbage.
-        # return self._fallback_plan(goal)
-
         subgoals = [s for s in (parsed or []) if isinstance(s, str) and s in SUBGOAL_CATALOG]
         if subgoals and set(subgoals) == set(SUBGOAL_CATALOG):
             print("[TPA] LLM returned the entire subgoal catalog - treating that as "
@@ -164,7 +188,20 @@ class CTaskPlanningAgent:
     # ------------------------------------------------------------------ #
     # Reflection (meta-reasoning / self-critique over the execution log)
     # ------------------------------------------------------------------ #
-    def reflect(self, goal: str, execution_log: List) -> Dict:
+    @staticmethod
+    def _reject_ungrounded_currency(self, text: str) -> Optional[str]:
+        """
+        A $ or 'USD' anywhere in the reflection means the model attached a
+        number to a currency it was never given — that number wasn't in
+        `facts` either, so it's fabricated, not just mislabeled. Discard the
+        whole response rather than relabel the currency, which would just
+        launder a hallucinated figure into a plausible-looking rupee one.
+        """
+        if re.search(r"\$|USD|dollars?", text, re.IGNORECASE):
+            return None
+        return text
+
+    def reflect_old(self, goal: str, execution_log: List) -> Dict:
         ok_count = sum(1 for r in execution_log if r.status == "ok")
         total = len(execution_log)
         rule_based_success = total > 0 and ok_count == total
@@ -193,6 +230,53 @@ class CTaskPlanningAgent:
         return {"summary": summary, "success": rule_based_success,
                 "steps_ok": ok_count, "steps_total": total}
 
+    # Modified on 12/07/2026
+    def reflect(self, goal: str, execution_log: List) -> Dict:
+        ok_count = sum(1 for r in execution_log if r.status == "ok")
+        total = len(execution_log)
+        rule_based_success = total > 0 and ok_count == total
+
+        log_summary = "; ".join(
+            f"{r.tool}: {r.status}" + (f" ({r.error})" if r.error else "") for r in execution_log
+        )
+        facts = _grounded_facts(execution_log)
+        facts_block = "\n".join(f"- {v}" for v in facts.values()) or \
+            "(no monetary figures were computed in this run)"
+
+        summary = None
+        try:
+            messages = [
+                self.mOS.build_message(
+                    "system",
+                    "You are the Task Planning Agent reflecting on a completed run. "
+                    "In 1-2 sentences, summarize the outcome for the user in plain "
+                    "language. Do not give investment advice. "
+                    "All monetary figures in this system are in Indian Rupees — "
+                    "always use the \u20b9 symbol, never $ or USD. "
+                    "Use ONLY the numbers given to you in the 'Facts' list below. "
+                    "Do not calculate, estimate, or invent any NAV, price, "
+                    "percentage, or amount that is not explicitly present there. "
+                    "If no facts are given, describe the outcome qualitatively "
+                    "with no numbers at all."
+                ),
+                self.mOS.build_message(
+                    "user",
+                    f"Goal: {goal}\nExecution log: {log_summary}\n\nFacts:\n{facts_block}"
+                ),
+            ]
+            raw = self.mOS.get_response(messages, aModel=self.mModel).strip()
+            summary = self._reject_ungrounded_currency(raw)
+        except Exception:
+            summary = None
+
+        if not summary:
+            summary = (f"Completed {ok_count}/{total} step(s) successfully."
+                    if total else "No applicable steps were identified for this goal.")
+            if facts:
+                summary += " " + " ".join(facts.values())
+
+        return {"summary": summary, "success": rule_based_success,
+                "steps_ok": ok_count, "steps_total": total}
 
 ############################################################################
 #
