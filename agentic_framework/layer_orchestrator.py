@@ -54,7 +54,7 @@ class CAgenticOrchestrator:
     def _summarize_resource_use(self, log) -> str:
         by_status: Dict[str, int] = {}
         for record in log:
-            by_status[record.status] = by_status.get(record.status, 0) + 1
+            by_status[record.mStrStatus] = by_status.get(record.mStrStatus, 0) + 1
         return ", ".join(f"{k}={v}" for k, v in sorted(by_status.items())) or "no steps run"
 
     # ------------------------------------------------------------------ #
@@ -89,12 +89,12 @@ class CAgenticOrchestrator:
 
             dictStep["args"].update(extra_args.get(subgoal, {}))
             objExeRecord = self.mExecution.run_step(dictStep["tool"], dictStep["args"])
-            self.mMemory.add_short_term(subgoal, dictStep["tool"], objExeRecord.status == "ok",
-                                         note=objExeRecord.error)
+            self.mMemory.add_short_term(subgoal, dictStep["tool"], objExeRecord.mStrStatus == "ok",
+                                         note=objExeRecord.mError)
 
-            strStatusNote = f"{dictStep['tool']} -> {objExeRecord.status}"
-            if objExeRecord.error:
-                strStatusNote += f" ({objExeRecord.error})"
+            strStatusNote = f"{dictStep['tool']} -> {objExeRecord.mStrStatus}"
+            if objExeRecord.mError:
+                strStatusNote += f" ({objExeRecord.mError})"
             print_wrap(f"[Orchestrator] {strStatusNote}")
 
         # 5. Reasoning/TPA - reflect over the full execution log.

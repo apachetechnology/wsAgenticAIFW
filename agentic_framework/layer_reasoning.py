@@ -70,11 +70,11 @@ def _grounded_facts(execution_log) -> Dict[str, str]:
     """
     facts = {}
     for record in execution_log:
-        if record.status != "ok" or not isinstance(record.result, dict):
+        if record.mStrStatus != "ok" or not isinstance(record.mResult, dict):
             continue
-        result = record.result
+        result = record.mResult
 
-        if record.tool == "portfolio_report":
+        if record.mTool_Name == "portfolio_report":
             total_cost = result.get("total_cost_value")
             total_expected = result.get("total_expected_value")
             if total_cost is not None and total_expected is not None:
@@ -85,20 +85,20 @@ def _grounded_facts(execution_log) -> Dict[str, str]:
                     f"P&L {CURRENCY_SYMBOL}{pnl:,.2f}."
                 )
 
-        elif record.tool == "flag_risk":
+        elif record.mTool_Name == "flag_risk":
             flagged = result.get("flagged", [])
             facts["flag_risk"] = (
                 f"{len(flagged)} fund(s) flagged past the "
                 f"{result.get('threshold', 0):.0%} drawdown threshold."
             )
 
-        elif record.tool == "update_navs":
+        elif record.mTool_Name == "update_navs":
             facts["update_navs"] = (
                 f"{result.get('updated', 0)} of {result.get('total', 0)} fund(s) "
                 f"had NAVs updated; {len(result.get('failures', []))} failure(s)."
             )
 
-        elif record.tool == "performance_review":
+        elif record.mTool_Name == "performance_review":
             facts["performance_review"] = (
                 f"Performance computed for {len(result.get('funds', []))} fund(s)."
             )
@@ -202,12 +202,12 @@ class CTaskPlanningAgent:
         return text
 
     def reflect_old(self, goal: str, execution_log: List) -> Dict:
-        ok_count = sum(1 for r in execution_log if r.status == "ok")
+        ok_count = sum(1 for r in execution_log if r.mStrStatus == "ok")
         total = len(execution_log)
         rule_based_success = total > 0 and ok_count == total
 
         log_summary = "; ".join(
-            f"{r.tool}: {r.status}" + (f" ({r.error})" if r.error else "") for r in execution_log
+            f"{r.mTool_Name}: {r.mStrStatus}" + (f" ({r.mError})" if r.mError else "") for r in execution_log
         )
 
         try:
@@ -232,12 +232,12 @@ class CTaskPlanningAgent:
 
     # Modified on 12/07/2026
     def reflect(self, goal: str, execution_log: List) -> Dict:
-        ok_count = sum(1 for r in execution_log if r.status == "ok")
+        ok_count = sum(1 for r in execution_log if r.mStrStatus == "ok")
         total = len(execution_log)
         rule_based_success = total > 0 and ok_count == total
 
         log_summary = "; ".join(
-            f"{r.tool}: {r.status}" + (f" ({r.error})" if r.error else "") for r in execution_log
+            f"{r.mTool_Name}: {r.mStrStatus}" + (f" ({r.mError})" if r.mError else "") for r in execution_log
         )
         facts = _grounded_facts(execution_log)
         facts_block = "\n".join(f"- {v}" for v in facts.values()) or \

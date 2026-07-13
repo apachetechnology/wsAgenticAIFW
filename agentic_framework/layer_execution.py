@@ -18,12 +18,12 @@ from agentic_framework.agent_tools import CToolRegistry
 # 
 @dataclass
 class CExecutionRecord:
-    tool: str
-    args: Dict
-    status: str            # "ok" | "denied" | "error"
-    result: Optional[Any] = None
-    error: Optional[str] = None
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat(timespec="seconds"))
+    mTool_Name: str
+    mDictArgs: Dict
+    mStrStatus: str   # "ok" | "denied" | "error"
+    mResult: Optional[Any] = None
+    mError: Optional[str] = None
+    mTimestamp: str = field(default_factory=lambda: datetime.now().isoformat(timespec="seconds"))
 
     def to_dict(self) -> Dict:
         d = asdict(self)
@@ -46,7 +46,7 @@ class CExecutionEnvironment:
     def __init__(self, registry: CToolRegistry, allowed_permissions: Set[str]):
         self.mRegistry = registry
         self.mAllowedPermissions = set(allowed_permissions)
-        self.mLog: List[CExecutionRecord] = []
+        self.mListExeRecord: List[CExecutionRecord] = []
 
     # Added on 12/07/2026
     def _missing_required_args(self, func, args: Dict) -> List[str]:
@@ -62,90 +62,89 @@ class CExecutionEnvironment:
         tool = self.mRegistry.get(tool_name)
 
         if tool is None:
-            record = CExecutionRecord(tool_name, args, "error",
-                                       error=f"Unknown tool: {tool_name}")
-            self.mLog.append(record)
-            return record
+            oExeRecord = CExecutionRecord(tool_name, args, "error",
+                                       mError=f"Unknown tool: {tool_name}")
+            self.mListExeRecord.append(oExeRecord)
+            return oExeRecord
 
         missing = tool.permissions - self.mAllowedPermissions
         if missing:
-            record = CExecutionRecord(
+            oExeRecord = CExecutionRecord(
                 tool_name, args, "denied",
-                error=f"Missing permission(s) for this run: {sorted(missing)}",
-            )
-            self.mLog.append(record)
-            return record
+                mError=f"Missing permission(s) for this run: {sorted(missing)}")
+            self.mListExeRecord.append(oExeRecord)
+            return oExeRecord
         
         missing_args = self._missing_required_args(tool.func, args)
         if missing_args:
-            record = CExecutionRecord(
+            oExeRecord = CExecutionRecord(
                 tool_name, args, "skipped",
                 error=f"Missing required argument(s) for '{tool_name}': "
                     f"{', '.join(missing_args)}. Pass them via "
                     f"run(..., extra_args={{'<subgoal>': {{...}}}}).",
             )
-            self.mLog.append(record)
-            return record
+            self.mListExeRecord.append(oExeRecord)
+            return oExeRecord
 
         try:
             result = tool.func(**args)
-            record = CExecutionRecord(tool_name, args, "ok", result=result)
+            oExeRecord = CExecutionRecord(tool_name, args, "ok", mResult=result)
         except Exception as e:
-            record = CExecutionRecord(tool_name, args, "error", error=str(e))
-        self.mLog.append(record)
-        return record
+            oExeRecord = CExecutionRecord(tool_name, args, "error", mError=str(e))
+        self.mListExeRecord.append(oExeRecord)
+        return oExeRecord
 
     def get_log(self) -> List[CExecutionRecord]:
-        return self.mLog
+        return self.mListExeRecord
 
     def reset_state(self) -> None:
-        self.mLog = []
+        self.mListExeRecord = []
 
     def print_log_json(self, bVerbose: bool = True) -> None:
         """Pretty-print the execution log for notebooks and console."""
-        print(f"=== Execution Log ({len(self.mLog)} steps) ===\n")
+        print(f"=== Execution Log ({len(self.mListExeRecord)} steps) ===\n")
         
-        for i, record in enumerate(self.mLog, 1):
-            status_emoji = {"ok": "✅", "error": "❌", "denied": "🚫"}.get(record.status, "⚠️")
+        for i, oExeRecord in enumerate(self.mListExeRecord, 1):
+            status_emoji = {"ok": "✅", "error": "❌", "denied": "🚫"}.get(oExeRecord.mStrStatus, "⚠️")
             
-            print(f"{i:2d}. {status_emoji} {record.tool}  [{record.status.upper()}]")
-            print(f"    Time : {record.timestamp}")
+            print(f"{i:2d}. {status_emoji} {oExeRecord.mTool_Name}  [{oExeRecord.mStrStatus.upper()}]")
+            print(f"    Time : {oExeRecord.mTimestamp}")
             
-            if record.args:
-                print(f"    Args : {json.dumps(record.args, default=str)}")
+            if oExeRecord.mDictArgs:
+                print(f"    Args : {json.dumps(oExeRecord.mDictArgs, default=str)}")
             
-            if record.error:
-                print(f"    Error: {record.error}")
+            if oExeRecord.mError:
+                print(f"    Error: {oExeRecord.mError}")
             
-            if bVerbose and record.result:
-                result_str = json.dumps(record.result, indent=2, default=str) + "\n"
+            if bVerbose and oExeRecord.mResult:
+                result_str = json.dumps(oExeRecord.mResult, indent=2, default=str) + "\n"
                 print(f"    Result:\n{result_str}")
 
     def print_log_tabular(self, bVerbose: bool = True) -> None:
         """Pretty-print the execution log with special handling for portfolio reports."""
-        print(f"=== Execution Log ({len(self.mLog)} steps) ===\n")
+        print(f"=== Execution Log ({len(self.mListExeRecord)} steps) ===\n")
         cLINE_WIDTH = 110
         
-        for i, record in enumerate(self.mLog, 1):
-            status_emoji = {"ok": "✅", "error": "❌", "denied": "🚫"}.get(record.status, "⚠️")
+        for i, oExeRecord in enumerate(self.mListExeRecord, 1):
+            status_emoji = {"ok": "✅", "error": "❌", "denied": "🚫"}.get(oExeRecord.mStrStatus, "⚠️")
             
-            print(f"{i:2d}. {status_emoji} {record.tool}  [{record.status.upper()}]")
-            print(f"    Time : {record.timestamp}")
+            print(f"{i:2d}. {status_emoji} {oExeRecord.mTool_Name}  [{oExeRecord.mStrStatus.upper()}]")
+            print(f"    Time : {oExeRecord.mTimestamp}")
             
-            if record.args:
-                print(f"    Args : {json.dumps(record.args, default=str)}")
+            if oExeRecord.mDictArgs:
+                print(f"    Args : {json.dumps(oExeRecord.mDictArgs, default=str)}")
             
-            if record.error:
-                print(f"    Error: {record.error}")
+            if oExeRecord.mError:
+                print(f"    Error: {oExeRecord.mError}")
             
-            if bVerbose and record.result:
+            if bVerbose and oExeRecord.mResult:
                 print("    Result:")
                 
                 # Special handling for portfolio_report
-                if record.tool == "portfolio_report" and isinstance(record.result, dict):
-                    funds = record.result.get("funds", [])
-                    total_cost = record.result.get("total_cost_value")
-                    total_expected = record.result.get("total_expected_value")
+                if (oExeRecord.mTool_Name == "portfolio_report" or oExeRecord.mTool_Name == 'performance_review') and isinstance(oExeRecord.mResult, dict):
+                    funds = oExeRecord.mResult.get("funds", [])
+                    total_cost = oExeRecord.mResult.get("total_cost_value")
+                    total_expected = oExeRecord.mResult.get("total_expected_value")
                     
                     if funds:
                         print("    Portfolio Summary:")
@@ -171,6 +170,6 @@ class CExecutionEnvironment:
                             print("    " +  "-" * cLINE_WIDTH)        
                 else:
                     # Normal result printing for other tools
-                    result_str = json.dumps(record.result, indent=2, default=str)
+                    result_str = json.dumps(oExeRecord.mResult, indent=2, default=str)
                     print(result_str)
             
