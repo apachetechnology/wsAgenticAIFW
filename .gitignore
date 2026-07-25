@@ -2,7 +2,9 @@
 __pycache__
 local_data
 GOLD
-_DB
+#_DB
 *.xlsx
 *.csv
 *.zip
+
+seed_historical_holdings.py
