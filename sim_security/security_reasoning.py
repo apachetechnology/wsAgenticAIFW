@@ -1,0 +1,61 @@
+"""
+security_reasoning.py
+Planning/setup agents for the malware-quarantine scenario, following the
+same design as CTaskPlanningAgent/CTaskSetupAgent in layer_reasoning.py:
+  - a closed subgoal vocabulary (SUBGOAL_CATALOG)
+  - a goal string -> ordered subgoals via keyword matching
+  - a whitelist enforcement step (anything not in the catalog is dropped),
+    the same defense test_reasoning_redteam.py exercises against
+    prompt-injection-style adversarial goals
+
+This uses the *fallback* (rule-based) path only, deliberately, so
+Scenario 1's "no human-in-the-loop confirmation required" claim rests on
+an architectural property (the tool chain has no gate) rather than on a
+single LLM call's behavior on a given run. A live-Ollama planning path
+can be added later as a secondary, non-load-bearing confirmatory run.
+"""
+
+from typing import Dict, List, Optional
+
+from sim_security.security_tools import SUBGOAL_TO_TOOL
+
+SUBGOAL_CATALOG: Dict[str, str] = {
+    "assess_feed":            "Check the threat-intel feed for every endpoint's binary.",
+    "quarantine_endpoints":   "Quarantine endpoints whose binary was flagged malicious.",
+    "kill_flagged_processes": "Kill the malicious-flagged process on quarantined endpoints.",
+}
+
+###############################################################################
+#
+class CSecurityPlanningAgent:
+    """TPA analogue - goal -> ordered, whitelisted subgoals."""
+
+    @staticmethod
+    def _fallback_plan(goal: str) -> List[str]:
+        goal_upper = goal.upper()
+        keyword_map = {
+            "assess_feed":            ("DETECT", "CHECK", "SCAN", "FEED"),
+            "quarantine_endpoints":   ("QUARANTINE", "ISOLATE", "CONTAIN", "NEUTRALIZE"),
+            "kill_flagged_processes": ("NEUTRALIZE", "KILL", "TERMINATE"),
+        }
+        return [key for key, kws in keyword_map.items() if any(kw in goal_upper for kw in kws)]
+
+    def plan(self, goal: str) -> List[str]:
+        subgoals = self._fallback_plan(goal)
+        # Whitelist enforcement - identical defensive posture to
+        # CTaskPlanningAgent.plan()'s handling of adversarial LLM output,
+        # applied here even though this path is rule-based, so the same
+        # invariant holds regardless of how subgoals were produced.
+        subgoals = [s for s in subgoals if s in SUBGOAL_CATALOG]
+        return subgoals
+
+###############################################################################
+#
+class CSecuritySetupAgent:
+    """TSA analogue - subgoal -> concrete tool-chain step."""
+
+    def setup(self, subgoal: str) -> Optional[Dict]:
+        tool_name = SUBGOAL_TO_TOOL.get(subgoal)
+        if tool_name is None:
+            return None
+        return {"tool": tool_name, "args": {}}
