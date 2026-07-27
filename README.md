@@ -5,11 +5,11 @@ Illustration of the baseline architecture for an agentic AI system, structured i
   <img src="./media/AgAIFramework.png" alt="Agentic AI system Architecture" width="800">
 </p>
 
+Illustration of the states and transitions involved in executing a task within the Agentic AI system, along with the likelihood of the potential attacks at each layer. 01-Evasion, 02-Prompt injection, 03-Data poisoning, 04-Data exfiltration, 05-Model extraction, 06-Logic corruption, 07-Membership inference, 08-Resource manipulation, 09-DoS, 10-MitM, and 11-Side-channel attacks.
 <p align="left">
-  <img src="./media/AgAIStateMachine.pdf" alt="Agentic AI system Architecture" width="800">
+  <img src="./media/AgAIStateMachine.png" alt="Agentic AI system State diagram" width="800">
 </p>
 
-## Case studies using concern-matrix approach
 # Securing a financial agentic AI workflow
 
 - **nbMutualFunds.ipynb** - a deterministic, human-operated baseline: the operator directly calls CDBInterface.FetchNAVsAll(), CPerformanceAnalyzer.RecordTodayHistory(), FundsSummaryV2(), OwnerProfitSummary(), PerformanceSummary(), and per-fund plots, in a fixed, human-chosen order.
