@@ -2,7 +2,7 @@
 
 Illustration of the baseline architecture for an agentic AI system, structured into four distinct layers: *orchestration*, *perception*, *reasoning*, and *action*.
 <p align="left">
-  <img src="../media/AgAIFramework.pdf" alt="Agentic AI system Architecture" width="500">
+  <img src="../media/AgAIFramework.png" alt="Agentic AI system Architecture" width="500">
 </p>
 
 ## Case studies using concern-matrix approach
