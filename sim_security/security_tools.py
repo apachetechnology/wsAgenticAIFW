@@ -10,12 +10,10 @@ flag_risk / portfolio_report in the finance repo, which loop over all
 holding rows for the owner).
 """
 
-from typing import Dict, List, Optional
+from typing import Dict, Optional
 
 from sim_security.endpointfleet import CEndpointFleet
 from sim_security.threat_feed import CThreatFeed
-
-# Reuse the real, unmodified CTool dataclass from the cloned framework.
 from agentic_framework.agent_tools import CTool
 
 SUBGOAL_TO_TOOL = {
@@ -113,7 +111,7 @@ class CSecurityToolRegistry:
         def kill_flagged_processes(**_) -> Dict:
             killed = []
             for oEP in self.mEPFleet.fetch_all():
-                if oEP.mEP_Status == "QUARANTINED" and not oEP.process_killed:
+                if oEP.mEP_Status == "QUARANTINED" and not oEP.mProcess_killed:
                     oEP.mProcess_killed = True
                     killed.append(oEP.mEndpoint_id)
             return {"killed": killed, "count": len(killed)}

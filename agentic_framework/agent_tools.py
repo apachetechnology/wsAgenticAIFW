@@ -37,10 +37,10 @@ SUBGOAL_TO_TOOL = {
 ############################################################################
 @dataclass
 class CTool:
-    name: str
-    permissions: set
-    func: Callable
-    description: str = ""
+    mTool_name: str
+    mTool_permissions: set
+    mTool_func: Callable
+    mTool_description: str = ""
 
 
 ############################################################################

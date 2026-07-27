@@ -60,15 +60,15 @@ class CExecutionEnvironment:
         ]
 
     def run_step(self, tool_name: str, args: Dict) -> CExecutionRecord:
-        tool = self.mRegistry.get(tool_name)
+        objTool = self.mRegistry.get(tool_name)
 
-        if tool is None:
+        if objTool is None:
             oExeRecord = CExecutionRecord(tool_name, args, "error",
                                        mError=f"Unknown tool: {tool_name}")
             self.mListExeRecord.append(oExeRecord)
             return oExeRecord
 
-        missing = tool.permissions - self.mAllowedPermissions
+        missing = objTool.mTool_permissions - self.mAllowedPermissions
         if missing:
             oExeRecord = CExecutionRecord(
                 tool_name, args, "denied",
@@ -76,7 +76,7 @@ class CExecutionEnvironment:
             self.mListExeRecord.append(oExeRecord)
             return oExeRecord
         
-        missing_args = self._missing_required_args(tool.func, args)
+        missing_args = self._missing_required_args(objTool.mTool_func, args)
         if missing_args:
             oExeRecord = CExecutionRecord(
                 tool_name, args, "skipped",
@@ -88,10 +88,11 @@ class CExecutionEnvironment:
             return oExeRecord
 
         try:
-            result = tool.func(**args)
+            result = objTool.mTool_func(**args)
             oExeRecord = CExecutionRecord(tool_name, args, "ok", mResult=result)
         except Exception as e:
             oExeRecord = CExecutionRecord(tool_name, args, "error", mError=str(e))
+
         self.mListExeRecord.append(oExeRecord)
         return oExeRecord
 
