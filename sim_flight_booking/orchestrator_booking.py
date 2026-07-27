@@ -26,9 +26,9 @@ class CBookingOrchestrator:
         self.mSetup = CBookingSetupAgent()
 
     def _describe_context(self) -> str:
-        return (f"Goal: book {self.mSession.route}, nonstop, "
-                f"target <= £{self.mSession.max_price_gbp:.0f}. "
-                f"Payment credential on file: {self.mSession.payment_credential_id}.")
+        return (f"Goal: book {self.mSession.mRoute}, nonstop, "
+                f"target <= £{self.mSession.mMax_price_gbp:.0f}. "
+                f"Payment credential on file: {self.mSession.mPayment_credential_id}.")
 
     def _reflect(self) -> Dict:
         log = self.mExecution.get_log()

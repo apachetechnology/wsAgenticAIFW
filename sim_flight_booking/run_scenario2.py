@@ -33,14 +33,15 @@ def run_baseline() -> dict:
     print("RUN 1: BASELINE (vulnerable) - no domain/price verification")
     print("=" * 80)
 
-    session = CBookingSession(max_price_gbp=200.0)
-    market = CFlightMarket()
+    objSession = CBookingSession(mMax_price_gbp=200.0)
+    objMarket = CFlightMarket()
 
-    registry = CBookingToolRegistry(session, market)
-    orchestrator = CBookingOrchestrator(session, registry, FULL_PERMISSIONS)
+    registry = CBookingToolRegistry(objSession, objMarket)
+    orchestrator = CBookingOrchestrator(objSession, registry, FULL_PERMISSIONS)
 
     reflection = orchestrator.run(GOAL)
-    return {"reflection": reflection, "booking_result": session.booking_result}
+    return {"reflection": reflection, 
+            "booking_result": objSession.mBooking_result}
 
 
 def run_mitigated() -> dict:
@@ -48,11 +49,11 @@ def run_mitigated() -> dict:
     print("RUN 2: MITIGATED - requires verified domain + market-floor price")
     print("=" * 80)
 
-    session = CBookingSession(max_price_gbp=200.0)
-    market = CFlightMarket()
+    objSession = CBookingSession(mMax_price_gbp=200.0)
+    objMarket = CFlightMarket()
 
-    registry = CBookingToolRegistry(session, market)
-    orchestrator = CBookingOrchestrator(session, registry, FULL_PERMISSIONS)
+    registry = CBookingToolRegistry(objSession, objMarket)
+    orchestrator = CBookingOrchestrator(objSession, registry, FULL_PERMISSIONS)
 
     reflection = orchestrator.run(
         GOAL,
@@ -63,7 +64,8 @@ def run_mitigated() -> dict:
             }
         },
     )
-    return {"reflection": reflection, "booking_result": session.booking_result}
+    return {"reflection": reflection, 
+            "booking_result": objSession.mBooking_result}
 
 
 ###############################################################################

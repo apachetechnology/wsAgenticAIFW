@@ -14,10 +14,10 @@ from sim_flight_booking.flight_market import CFlightOffer
 #
 @dataclass
 class CBookingSession:
-    route: str = "London-New York"
-    max_price_gbp: float = 200.0
-    payment_credential_id: str = "wallet-primary-card"  # "stored payment credentials"
+    mRoute: str = "London-New York"
+    mMax_price_gbp: float = 200.0
+    mPayment_credential_id: str = "wallet-primary-card"  # "stored payment credentials"
 
-    last_search_results: List[CFlightOffer] = field(default_factory=list)
-    selected_offer: Optional[CFlightOffer] = None
-    booking_result: Optional[dict] = None
+    mLast_search_results: List[CFlightOffer] = field(default_factory=list)
+    mSelected_offer: Optional[CFlightOffer] = None
+    mBooking_result: Optional[dict] = None

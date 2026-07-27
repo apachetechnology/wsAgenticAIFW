@@ -23,10 +23,10 @@ OFFICIAL_DOMAIN = "flyfast-airways.example"
 #
 @dataclass
 class CFlightOffer:
-    domain: str
-    price_gbp: float
-    nonstop: bool
-    verified: bool  # True only for the airline's official, allow-listed domain
+    mDomain: str
+    mPrice_gbp: float
+    mNonstop: bool
+    mVerified: bool  # True only for the airline's official, allow-listed domain
 
 ###############################################################################
 #
@@ -48,18 +48,18 @@ class CFlightMarket:
         "flyfast-airways-sale.example",
     ]
 
-    def search(self, route: str, nonstop_only: bool = True) -> List[CFlightOffer]:
-        offers = [
-            CFlightOffer(domain=OFFICIAL_DOMAIN, price_gbp=362.0,
-                         nonstop=True, verified=True),
-            CFlightOffer(domain=OFFICIAL_DOMAIN, price_gbp=411.0,
-                         nonstop=True, verified=True),
+    def search_flight(self, route: str, nonstop_only: bool = True) -> List[CFlightOffer]:
+        listOffers = [
+            CFlightOffer(mDomain=OFFICIAL_DOMAIN, mPrice_gbp=362.0,
+                         mNonstop=True, mVerified=True),
+            CFlightOffer(mDomain=OFFICIAL_DOMAIN, mPrice_gbp=411.0,
+                         mNonstop=True, mVerified=True),
         ]
         # Fraudulent listings - all below the real price floor, all on
-        # unverified look-alike domains, all claiming nonstop to match
+        # unverified look-alike domains, all claiming mNonstop to match
         # the victim's search filters exactly.
         fraud_prices = [179.0, 185.0, 149.0, 199.0, 165.0, 189.0, 155.0, 197.0]
-        for domain, price in zip(self.LOOKALIKE_DOMAINS, fraud_prices):
-            offers.append(CFlightOffer(domain=domain, price_gbp=price,
-                                        nonstop=True, verified=False))
-        return offers
+        for domain_name, price in zip(self.LOOKALIKE_DOMAINS, fraud_prices):
+            listOffers.append(CFlightOffer(mDomain=domain_name, mPrice_gbp=price,
+                                        mNonstop=True, mVerified=False))
+        return listOffers
