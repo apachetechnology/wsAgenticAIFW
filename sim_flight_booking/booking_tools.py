@@ -7,18 +7,16 @@ unmodified from the cloned framework.
 
 from typing import Dict, Optional
 
-from session import CBookingSession
-from flight_market import CFlightMarket
+from sim_flight_booking.session import CBookingSession
+from sim_flight_booking.flight_market import CFlightMarket
 
 from agentic_framework.agent_tools import CTool
-
 
 SUBGOAL_TO_TOOL = {
     "search_flights": "search_flights",
     "select_offer":   "select_offer",
     "book_flight":    "book_flight",
 }
-
 
 ###############################################################################
 #

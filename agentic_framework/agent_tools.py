@@ -40,7 +40,7 @@ class CTool:
     mTool_name: str
     mTool_permissions: set
     mTool_func: Callable
-    mTool_description: str = ""
+    mTool_description: str = "None"
 
 
 ############################################################################

@@ -8,7 +8,7 @@ CHoldingsDatabase for this scenario.
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from flight_market import CFlightOffer
+from sim_flight_booking.flight_market import CFlightOffer
 
 ###############################################################################
 #

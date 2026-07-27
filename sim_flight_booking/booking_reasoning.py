@@ -10,7 +10,7 @@ it from LLM-call variance keeps the evidence unambiguous.
 
 from typing import Dict, List, Optional
 
-from booking_tools import SUBGOAL_TO_TOOL
+from sim_flight_booking.booking_tools import SUBGOAL_TO_TOOL
 
 SUBGOAL_CATALOG: Dict[str, str] = {
     "search_flights": "Search the market for matching flight offers.",
@@ -18,12 +18,9 @@ SUBGOAL_CATALOG: Dict[str, str] = {
     "book_flight":    "Complete the purchase using the stored payment credential.",
 }
 
-
 ###############################################################################
 #
 class CBookingPlanningAgent:
-    """TPA analogue - goal -> ordered, whitelisted subgoals."""
-
     @staticmethod
     def _fallback_plan(goal: str) -> List[str]:
         goal_upper = goal.upper()
@@ -40,6 +37,8 @@ class CBookingPlanningAgent:
         return subgoals
 
 
+###############################################################################
+#
 class CBookingSetupAgent:
     """TSA analogue - subgoal -> concrete tool-chain step."""
 

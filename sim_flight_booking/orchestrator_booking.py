@@ -11,9 +11,9 @@ from typing import Dict, Optional
 
 from agentic_framework.layer_execution import CExecutionEnvironment
 
-from session import CBookingSession
-from booking_tools import CBookingToolRegistry
-from booking_reasoning import CBookingPlanningAgent, CBookingSetupAgent
+from sim_flight_booking.session import CBookingSession
+from sim_flight_booking.booking_tools import CBookingToolRegistry
+from sim_flight_booking.booking_reasoning import CBookingPlanningAgent, CBookingSetupAgent
 
 ###############################################################################
 #
