@@ -1,10 +1,9 @@
 """
 orchestrator_booking.py
 Domain-pack orchestrator for Scenario 2, structurally parallel to
-orchestrator_security.py (Scenario 1) and CAgenticOrchestrator in the
-real framework. Only the domain-agnostic action-layer sandbox
-(CExecutionEnvironment) is reused directly; nothing in the finance repo
-is modified.
+orchestrator_security.py (Scenario 1). 
+Only the domain-agnostic action-layer sandbox
+(CExecutionEnvironment) is reused directly
 """
 
 from typing import Dict, Optional

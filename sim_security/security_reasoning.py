@@ -1,12 +1,9 @@
 """
 security_reasoning.py
-Planning/setup agents for the malware-quarantine scenario, following the
-same design as CTaskPlanningAgent/CTaskSetupAgent in layer_reasoning.py:
+Planning/setup agents for the malware-quarantine scenario
   - a closed subgoal vocabulary (SUBGOAL_CATALOG)
   - a goal string -> ordered subgoals via keyword matching
-  - a whitelist enforcement step (anything not in the catalog is dropped),
-    the same defense test_reasoning_redteam.py exercises against
-    prompt-injection-style adversarial goals
+  - a whitelist enforcement step (anything not in the catalog is dropped)
 
 This uses the *fallback* (rule-based) path only, deliberately, so
 Scenario 1's "no human-in-the-loop confirmation required" claim rests on

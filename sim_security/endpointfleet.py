@@ -2,9 +2,7 @@
 fleet.py
 A small (15-endpoint) simulated fleet for Scenario 1, each running the
 same "critical business binary" (shared file_hash) - so a single poisoned
-verdict for that hash can propagate fleet-wide, mirroring the paper's
-"a critical business binary is flagged as malicious ... isolates the
-process on every machine" narrative at reduced, inspectable scale.
+verdict for that hash can propagate fleet-wide
 """
 
 from dataclasses import dataclass

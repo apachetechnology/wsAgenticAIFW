@@ -1,13 +1,9 @@
 """
 security_tools.py
-Action-layer tool registry for the malware-quarantine scenario, built in
-the exact style of wsAgenticAIFW's agent_tools.py (CToolRegistry pattern:
-name -> permissions -> callable -> description), so it plugs straight
-into the unmodified CExecutionEnvironment from the framework.
+Action-layer tool registry for the malware-quarantine scenario
+It plugs straight into the CExecutionEnvironment from the framework.
 
-Tools operate on the whole fleet per call (same pattern as update_navs /
-flag_risk / portfolio_report in the finance repo, which loop over all
-holding rows for the owner).
+Tools operate on the whole fleet per call.
 """
 
 from typing import Dict, Optional

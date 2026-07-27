@@ -1,8 +1,6 @@
 """
 booking_tools.py
-Action-layer tool registry for the flight-booking scenario, in the same
-CToolRegistry style as agent_tools.py, reusing the real CTool dataclass
-unmodified from the cloned framework.
+Action-layer tool registry for the flight-booking scenario
 """
 
 from typing import Dict, Optional

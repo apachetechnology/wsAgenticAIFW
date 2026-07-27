@@ -1,17 +1,12 @@
 """
 orchestrator_security.py
-Domain-pack orchestrator for Scenario 1, structurally parallel to
-CAgenticOrchestrator in layer_orchestrator.py:
+Domain-pack orchestrator for Scenario 1
     1. Perception : snapshot fleet status
     2. Reasoning   : plan()  -> ordered subgoals (closed catalog)
     3. Reasoning   : setup() -> tool + args per subgoal
     4. Action      : run_step() -> sandboxed execution (REAL, unmodified
                      CExecutionEnvironment from agentic_framework)
     5. Reflection  : plain-language summary grounded in the execution log
-
-No perception/reasoning/memory classes from the finance repo are
-imported or modified - only the domain-agnostic action-layer sandbox
-(CExecutionEnvironment) is reused directly.
 """
 
 from typing import Dict, Optional

@@ -2,13 +2,12 @@
 run_scenario1.py
 Scenario 1 - False-Positive Quarantine in Enterprise Malware Detection
 (paper Section 3.2.1), simulated end-to-end using:
-  - the REAL, unmodified CExecutionEnvironment from the wsAgenticAIFW
+  - CExecutionEnvironment from the wsAgenticAIFW
     framework (agentic_framework/layer_execution.py) for sandboxed,
     permission-gated tool execution
-  - the REAL, unmodified CTool dataclass (agentic_framework/agent_tools.py)
-  - a new, self-contained security domain pack (endpointfleet.py, threat_feed.py,
+  - CTool dataclass (agentic_framework/agent_tools.py)
+  - security domain pack (endpointfleet.py, threat_feed.py,
     security_tools.py, security_reasoning.py, orchestrator_security.py)
-    that does not modify anything inside the cloned repo
 
 Run 1 (baseline / vulnerable): mirrors the paper's stated conditions -
   Autonomy   -> no human-in-the-loop confirmation required
@@ -19,14 +18,10 @@ Run 1 (baseline / vulnerable): mirrors the paper's stated conditions -
 
 Run 2 (mitigated): same poisoned feed, same permission set, but the
   quarantine tool now requires corroboration from an independent
-  reputation signal before acting - the security-domain analogue of the
-  repo's MAX_DAILY_MOVE NAV-plausibility-bound fix (Table 4: "scoped
-  tool access" / "audit logs and explicit consent").
+  reputation signal before acting.
 
 Usage:
     cd sim_security && python run_scenario1.py
-(Run from this directory, or with the repo root and this directory both
-on sys.path, since this script imports the framework directly.)
 """
 
 import sys
