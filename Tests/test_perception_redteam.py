@@ -14,6 +14,6 @@ def test_update_navs_rejects_spoofed_feed(monkeypatch, tool_registry):
                                         else float(spoofed["data"][0]["nav"]),
                                   "date": spoofed["data"][0]["date"], "fund_name": "TEST"}
         )
-        result = tool_registry.get("update_navs").func(owner_name="SG")
+        result = tool_registry.get("update_navs").mTool_func(owner_name="SG")
         assert result["updated"] == 0  # nothing malicious should land in holdings
         assert result["rejected"] or result["failures"]
