@@ -189,7 +189,7 @@ class CTaskPlanningAgent:
     # Reflection (meta-reasoning / self-critique over the execution log)
     # ------------------------------------------------------------------ #
     @staticmethod
-    def _reject_ungrounded_currency(self, text: str) -> Optional[str]:
+    def _reject_ungrounded_currency(text: str) -> Optional[str]:
         """
         A $ or 'USD' anywhere in the reflection means the model attached a
         number to a currency it was never given — that number wasn't in

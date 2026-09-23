@@ -80,7 +80,7 @@ class CExecutionEnvironment:
         if missing_args:
             oExeRecord = CExecutionRecord(
                 tool_name, args, "skipped",
-                error=f"Missing required argument(s) for '{tool_name}': "
+                mError=f"Missing required argument(s) for '{tool_name}': "
                     f"{', '.join(missing_args)}. Pass them via "
                     f"run(..., extra_args={{'<subgoal>': {{...}}}}).",
             )
