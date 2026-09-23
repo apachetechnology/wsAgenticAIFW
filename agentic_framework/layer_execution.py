@@ -1,6 +1,6 @@
 """
 execution.py
-CExecutionEnvironment - Paper Fig. 1 "Execution Environment": sandboxed
+CExecutionEnvironment - "Execution Environment": sandboxed
 runtime, permission system, state management, and error handling for
 the Action layer. Tool-chain steps produced by the Task Setup Agent are
 run here, never invoked directly.

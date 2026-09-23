@@ -1,6 +1,6 @@
 """
 reasoning.py
-Reasoning layer - Paper Fig. 1 / Section 3.2: Task Planning Agent (TPA)
+Reasoning layer - Section 3.2: Task Planning Agent (TPA)
 and Task Setup Agent (TSA), backed by a local Ollama model via
 COllamaServer.
 
