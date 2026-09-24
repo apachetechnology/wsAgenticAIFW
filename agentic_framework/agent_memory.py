@@ -114,8 +114,12 @@ class CAgentMemory:
         the new goal. Good enough to remind the TPA "you've handled
         something like this before, and here's how it went."
         """
+        # SG: Fixed the bug
+        #cur = self.mConn.execute(
+        #    "SELECT * FROM agent_episodes ORDER BY id DESC LIMIT 200"
+        #)
         cur = self.mConn.execute(
-            "SELECT * FROM agent_episodes ORDER BY id DESC LIMIT 200"
+            "SELECT * FROM agent_episodes WHERE quarantined = 0 ORDER BY id DESC LIMIT 200"
         )
         rows = cur.fetchall()
         scored = [(self._keyword_overlap(goal, r["goal"]), r) for r in rows]
@@ -149,8 +153,12 @@ class CAgentMemory:
         either prompt-injection steering or memory poisoning biasing recall.
         Returns a warning string, or None if within bounds.
         """
+        # SG: fixed the bug
+        #rows = self.mConn.execute(
+        #    "SELECT subgoals_json FROM agent_episodes ORDER BY id DESC LIMIT 200"
+        #).fetchall()
         rows = self.mConn.execute(
-            "SELECT subgoals_json FROM agent_episodes ORDER BY id DESC LIMIT 200"
+            "SELECT subgoals_json FROM agent_episodes WHERE quarantined = 0 ORDER BY id DESC LIMIT 200"
         ).fetchall()
         if len(rows) < min_episodes:
             return None
