@@ -25,21 +25,18 @@ https://hubkub.com/how-to/run-llama-4-scout-locally-ollama/
 ollama --version
 
 ## Step 2 — Download Llama models  
-```
-    | Model        | Size     | Good For                          |
-    |--------------|---------:|-----------------------------------|
-    | llama3.2:1b  | ~1 GB    | Very fast, basic tasks            |
-    | llama3.2:3b  | ~2 GB    | Good balance, general use         |
-    | phi4-mini    | ~2.5 GB  | Smart for its size, reasoning     |
-    | gemma3:1b    | ~815 MB  | Smallest usable model             |
-    | qwen2.5:3b   | ~2 GB    | Good at coding                    |
-```
 
-ollama pull llama4:scout <br>
-ollama pull gemma3:1b <br>
+| Model | Size on disk |Developer | Release |
+|---|---|---|---|
+| Phi-3.5 mini | ~2.2 GB | Microsoft | 20 Aug 2024 |
+| Qwen 2.5 | ~1.9 GB |Alibaba | 19 Sep 2024 |
+| Llama 3.2 | ~815 MB |Meta | 25 Sep 2024 |
+| Gemma 3 | ~1.3 GB | Google | 12 Mar 2025 |
+
+ollama pull phi3.5:3.8b <br>
+ollama pull qwen2.5:3b <br>
 ollama pull llama3.2:1b <br>
-ollama pull nomic-embed-text:latest <br>
+ollama pull gemma3:1b <br>
 
 Check installation<br>
 ollama list<br>
-ollama run gemma3:1b<br>
