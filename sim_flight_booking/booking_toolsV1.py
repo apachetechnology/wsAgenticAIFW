@@ -18,7 +18,7 @@ SUBGOAL_TO_TOOL = {
 
 ###############################################################################
 #
-class CBookingToolRegistry:
+class CBookingToolRegistryV1:
     """Domain pack for the flight-booking scam scenario."""
 
     def __init__(self, session: CBookingSession, market: CFlightMarket):

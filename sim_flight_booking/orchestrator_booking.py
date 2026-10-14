@@ -11,13 +11,13 @@ from typing import Dict, Optional
 from agentic_framework.layer_execution import CExecutionEnvironment
 
 from sim_flight_booking.session import CBookingSession
-from sim_flight_booking.booking_tools import CBookingToolRegistry
+from sim_flight_booking.booking_toolsV2 import CBookingToolRegistryV2
 from sim_flight_booking.booking_reasoning import CBookingPlanningAgent, CBookingSetupAgent
 
 ###############################################################################
 #
 class CBookingOrchestrator:
-    def __init__(self, session: CBookingSession, registry: CBookingToolRegistry,
+    def __init__(self, session: CBookingSession, registry: CBookingToolRegistryV2,
                  allowed_permissions: set):
         self.mSession = session
         self.mExecution = CExecutionEnvironment(registry, allowed_permissions)
