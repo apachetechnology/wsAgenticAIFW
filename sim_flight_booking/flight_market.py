@@ -48,6 +48,15 @@ class CFlightMarket:
         "flyfast-airways-sale.example",
     ]
 
+    def __init__(self, whitelist_compromised: bool = False):
+        self.mWLC = whitelist_compromised
+        # in search_flight(), replace the final loop with:
+        for i, (domain_name, price) in enumerate(zip(self.LOOKALIKE_DOMAINS, fraud_prices)):
+            # whitelist compromised: cheapest fake (index 2, GBP 149) is marked verified
+            listOffers.append(CFlightOffer(mDomain=domain_name, mPrice_gbp=price,
+                                           mNonstop=True,
+                                           mVerified=(self.mWLC and i == 2)))
+
     def search_flight(self, route: str, nonstop_only: bool = True) -> List[CFlightOffer]:
         listOffers = [
             CFlightOffer(mDomain=OFFICIAL_DOMAIN, mPrice_gbp=362.0,
