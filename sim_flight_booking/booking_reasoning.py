@@ -10,7 +10,7 @@ it from LLM-call variance keeps the evidence unambiguous.
 
 from typing import Dict, List, Optional
 
-from sim_flight_booking.booking_toolsV1 import SUBGOAL_TO_TOOL
+from sim_flight_booking.booking_toolsV2 import SUBGOAL_TO_TOOL
 
 SUBGOAL_CATALOG: Dict[str, str] = {
     "search_flights": "Search the market for matching flight offers.",
