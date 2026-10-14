@@ -92,4 +92,11 @@ class COllamaServer:
     
     def build_message(self, aRole, aContent):
         return {"role": aRole, "content": aContent}
+
+    ## SG: added to test agent engineering paper
+    def get_response_AE(self, messages, aModel, temperature=0.0, seed=None):
+        kwargs = dict(model=aModel, messages=messages, temperature=temperature)
+        if seed is not None:
+            kwargs["seed"] = seed
+        return self.mClient.chat.completions.create(**kwargs).choices[0].message.content
     
