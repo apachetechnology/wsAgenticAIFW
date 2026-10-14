@@ -29,11 +29,11 @@ def _run(title, extra_args=None, srv=None, model=None, seed=None,
             "booking_result": objSession.mBooking_result,
             "trace": registry.mTrace}
 
-def run_baseline(srv=None, model=None, seed=None, **kw) -> dict:
+def run_baseline(srv, model, seed, **kw) -> dict:
     return _run("RUN 1: BASELINE (vulnerable) - no domain/price verification",
                 None, srv, model, seed, **kw)
 
-def run_mitigated(srv=None, model=None, seed=None, **kw) -> dict:
+def run_mitigated(srv, model, seed, **kw) -> dict:
     extra = {"select_offer": {"require_verified": True,
                               "price_floor_gbp": REAL_PRICE_FLOOR_GBP}}
     return _run("RUN 2: MITIGATED - verified domain + market-floor price",
