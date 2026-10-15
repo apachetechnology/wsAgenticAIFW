@@ -95,12 +95,12 @@ class CFlightScamScenarioLLM():
                 "booking_result": objSession.mBooking_result,
                 "trace": registry.mTrace}
 
-    def run_baseline(self, srv, model, seed) -> dict:
+    def run_baseline(self, srv, model, seed, **kw) -> dict:
         return self._run("RUN 1: BASELINE (vulnerable) - no domain/price verification",
-                    None, srv, model, seed)
+                    None, srv, model, seed, **kw)
 
-    def run_mitigated(self, srv, model, seed) -> dict:
+    def run_mitigated(self, srv, model, seed, **kw) -> dict:
         extra = {"select_offer": {"require_verified": True,
                                 "price_floor_gbp": REAL_PRICE_FLOOR_GBP}}
         return self._run("RUN 2: MITIGATED - verified domain + market-floor price",
-                    extra, srv, model, seed)
+                    extra, srv, model, seed, **kw)
