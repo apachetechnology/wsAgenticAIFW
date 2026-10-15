@@ -12,7 +12,7 @@ from sim_malware_quarantine.orchestrator_security import CSecurityOrchestrator
 
 ######################################################################################################
 ##
-class CAEConfig():
+class CAEConfig:
     F_FULL = {"READ", "NETWORK", "COMPUTE", "WRITE"}
 
     FLIGHT_CFGS = {
@@ -47,11 +47,14 @@ class CAEConfig():
 ######################################################################################################
 ##
 class CAEConsole():
-    def __init__(self, aTemperature = 0.7):
+    def __init__(self, aTemperature = 0.7, aQuiet=True):
         print("Console Init")
         self.mTemperature = aTemperature
+        self.mQuiet = aQuiet
 
-    def _quiet(fn, *a, **k):
+    def _quiet(self, fn, *a, **k):
+        if not self.mQuiet:
+            return fn(*a, **k)
         with contextlib.redirect_stdout(io.StringIO()):
             return fn(*a, **k)
 
