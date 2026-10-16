@@ -18,13 +18,13 @@
 
 
 ## Ollama installation
-Step 1 — Download & Install Ollama
+Step 1 - Download & Install Ollama
 https://ollama.com/download
 https://hubkub.com/how-to/run-llama-4-scout-locally-ollama/
 
 ollama --version
 
-## Step 2 — Download Llama models  
+## Step 2 - Download Llama models  
 
 | Model | Size on disk |Developer | Release |
 |---|---|---|---|
