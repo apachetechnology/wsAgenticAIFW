@@ -30,8 +30,8 @@ ollama --version
 |---|---|---|---|
 | Phi-3.5 mini | ~2.2 GB | Microsoft | 20 Aug 2024 |
 | Qwen 2.5 | ~1.9 GB |Alibaba | 19 Sep 2024 |
-| Llama 3.2 | ~815 MB |Meta | 25 Sep 2024 |
-| Gemma 3 | ~1.3 GB | Google | 12 Mar 2025 |
+| Llama 3.2 | ~1.3 GB |Meta | 25 Sep 2024 |
+| Gemma 3 | ~815 MB | Google | 12 Mar 2025 |
 
 ollama pull phi3.5:3.8b <br>
 ollama pull qwen2.5:3b <br>
