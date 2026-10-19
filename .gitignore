@@ -4,7 +4,7 @@ local_data
 GOLD
 #_DB
 *.xlsx
-*.csv
+#*.csv
 *.zip
 
 seed_historical_holdings.py
