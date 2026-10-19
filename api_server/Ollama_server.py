@@ -100,10 +100,10 @@ class COllamaServer:
             kwargs["seed"] = seed
         return self.mClient.chat.completions.create(**kwargs).choices[0].message.content
 
-    def get_response_AE(self, messages, aModel, temperature=0.0, seed=None, 
-                        max_tokens=256):
+    def get_response_AE(self, messages, aModel, temperature=0.0, seed=None, max_tokens=80):
         kwargs = dict(model=aModel, messages=messages, temperature=temperature,
-                    max_tokens=max_tokens)
+                    max_tokens=max_tokens,
+                    response_format={"type": "json_object"})
         if seed is not None:
             kwargs["seed"] = seed
         return self.mClient.chat.completions.create(**kwargs).choices[0].message.content
