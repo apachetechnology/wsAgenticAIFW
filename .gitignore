@@ -7,4 +7,6 @@ GOLD
 #*.csv
 *.zip
 
+./Results/Temp
+
 seed_historical_holdings.py
