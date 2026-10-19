@@ -40,3 +40,10 @@ ollama pull gemma3:1b <br>
 
 Check installation<br>
 ollama list<br>
+
+## Ollama
+```
+taskkill /F /IM "ollama app.exe"
+taskkill /F /IM ollama.exe
+tasklist | findstr /I ollama
+```
